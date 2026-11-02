@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -25,21 +26,12 @@
       --border: rgba(255, 255, 255, .09);
     }
 
-    .app-version {
-      margin-top: 25px;
-      color: #62677a;
-      font-size: 10px;
-      text-align: center;
-      letter-spacing: .8px;
-    }
-
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
 
-    html,
-    body {
+    html, body {
       width: 100%;
       min-height: 100%;
       margin: 0;
@@ -48,11 +40,9 @@
     body {
       min-height: 100vh;
       overflow-x: hidden;
-      background:
-        radial-gradient(ellipse at 50% 35%, #171a29 0%, #0b0c12 65%);
+      background: radial-gradient(ellipse at 50% 35%, #171a29 0%, #0b0c12 65%);
       color: var(--text);
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", sans-serif;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -75,15 +65,8 @@
     }
 
     @keyframes screenIn {
-      from {
-        opacity: 0;
-        transform: translateY(9px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(9px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .card {
@@ -107,14 +90,11 @@
       margin-bottom: 10px;
     }
 
-    h1,
-    h2,
-    p {
+    h1, h2, p {
       margin-top: 0;
     }
 
-    h1,
-    h2 {
+    h1, h2 {
       text-align: center;
       letter-spacing: -.5px;
     }
@@ -168,6 +148,10 @@
       cursor: pointer;
     }
 
+    .hidden {
+      display: none !important;
+    }
+
     /* MENU */
 
     .menu-options {
@@ -219,6 +203,14 @@
       font-size: 12px;
     }
 
+    .app-version {
+      margin-top: 16px;
+      color: #62677a;
+      font-size: 10px;
+      text-align: center;
+      letter-spacing: .8px;
+    }
+
     /* TESTE NUMÉRICO */
 
     #number-screen .card {
@@ -233,8 +225,7 @@
       margin: 4px auto 8px;
       overflow: hidden;
       border-radius: 16px;
-      background:
-        radial-gradient(circle at center, rgba(58, 66, 112, .15), transparent 65%);
+      background: radial-gradient(circle at center, rgba(58, 66, 112, .15), transparent 65%);
     }
 
     #nebula-canvas {
@@ -269,9 +260,7 @@
       font-weight: 850;
       letter-spacing: -4px;
       white-space: nowrap;
-      text-shadow:
-        0 0 18px rgba(255, 255, 255, .35),
-        0 0 50px rgba(118, 139, 255, .5);
+      text-shadow: 0 0 18px rgba(255, 255, 255, .35), 0 0 50px rgba(118, 139, 255, .5);
     }
 
     .number-status {
@@ -341,12 +330,7 @@
       color: #777c8d;
       font-size: clamp(21px, 7vw, 29px);
       font-weight: 800;
-      transition:
-        background .18s,
-        color .18s,
-        border-color .18s,
-        transform .18s,
-        box-shadow .18s;
+      transition: background .18s, color .18s, border-color .18s, transform .18s, box-shadow .18s;
     }
 
     .sequence-symbol.current {
@@ -372,19 +356,9 @@
     }
 
     @keyframes errorShake {
-
-      0%,
-      100% {
-        transform: translateX(0);
-      }
-
-      25% {
-        transform: translateX(-4px);
-      }
-
-      75% {
-        transform: translateX(4px);
-      }
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
     }
 
     .sequence-progress {
@@ -462,7 +436,7 @@
       pointer-events: none;
     }
 
-    /* PAINEL DE RESULTADO SOBREPOSTO */
+    /* RESULTADO SOBREPOSTO */
 
     .sequence-result-overlay {
       position: absolute;
@@ -580,13 +554,8 @@
       margin-top: 4px;
     }
 
-    .stat-box.hits .stat-value {
-      color: var(--green);
-    }
-
-    .stat-box.errors .stat-value {
-      color: var(--red);
-    }
+    .stat-box.hits .stat-value { color: var(--green); }
+    .stat-box.errors .stat-value { color: var(--red); }
 
     .overlay-summary {
       color: var(--muted);
@@ -596,85 +565,19 @@
       margin-bottom: 17px;
     }
 
-    /* RESULTADO NUMÉRICO */
-
-    .number-result-panel {
-      width: 100%;
-      max-width: 340px;
-      padding: 23px 20px;
-      border: 1px solid rgba(255, 255, 255, .12);
-      border-radius: 18px;
-      background: rgba(22, 25, 37, .97);
-      text-align: center;
-    }
-
-    .number-result-heading {
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 750;
-      letter-spacing: 2px;
-      margin-bottom: 8px;
-    }
-
-    .number-result-ratio {
-      font-size: 36px;
-      font-weight: 850;
-      letter-spacing: -1px;
-      margin-bottom: 8px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .number-result-caption {
-      color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 18px;
-    }
-
-    /* BOTÕES E ESTADOS */
-
-    .hidden {
-      display: none !important;
-    }
-
     @media (max-width: 360px) {
-      body {
-        padding: 10px;
-      }
-
-      .card {
-        padding: 22px 15px;
-      }
-
-      #sequence-screen .card {
-        padding: 22px 13px;
-      }
-
-      .sequence-grid {
-        gap: 5px;
-      }
-
-      .sequence-symbol {
-        border-radius: 9px;
-      }
-
-      .sequence-result-overlay {
-        padding: 12px;
-      }
-
-      .sequence-result-panel {
-        padding: 18px 13px;
-      }
-
-      .stat-value {
-        font-size: 18px;
-      }
+      body { padding: 10px; }
+      .card { padding: 22px 15px; }
+      #sequence-screen .card { padding: 22px 13px; }
+      .sequence-grid { gap: 5px; }
+      .sequence-symbol { border-radius: 9px; }
+      .sequence-result-overlay { padding: 12px; }
+      .sequence-result-panel { padding: 18px 13px; }
+      .stat-value { font-size: 18px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-
-      *,
-      *::before,
-      *::after {
+      *, *::before, *::after {
         animation-duration: .01ms !important;
         transition-duration: .01ms !important;
       }
@@ -711,7 +614,8 @@
         </button>
       </div>
     </div>
-    <div class="app-version">Skill Check · v1.0.4</div>
+
+    <div class="app-version">Skill Check · v1.0.5</div>
   </section>
 
   <!-- TESTE NUMÉRICO -->
@@ -773,11 +677,12 @@
         <button class="direction-button" data-direction="RIGHT" aria-label="Direita">▶</button>
       </div>
 
-      <!-- PAINEL SOBREPOSTO -->
+      <!-- PAINEL DE RESULTADO -->
       <div id="sequence-result-overlay" class="sequence-result-overlay">
         <div class="sequence-result-panel">
 
           <div class="overlay-status">Resultado do teste</div>
+
           <div id="sequence-overlay-title" class="overlay-title">
             Desafio concluído
           </div>
@@ -819,6 +724,7 @@
           <button id="sequence-menu" class="secondary-button hidden" onclick="goToMenu()">
             Voltar ao menu
           </button>
+
         </div>
       </div>
 
@@ -829,12 +735,15 @@
     "use strict";
 
     // ============================================================
-    // CONFIGURAÇÃO
+    // CONFIGURAÇÃO GERAL
     // ============================================================
 
-    const APP_VERSION = "1.0.4";
+    const APP_VERSION = "1.0.5";
 
     const tg = window.Telegram?.WebApp || null;
+
+    // Considera Telegram apenas quando há dados de inicialização.
+    const isTelegram = Boolean(tg && tg.initData);
 
     if (tg) {
       tg.ready();
@@ -843,7 +752,7 @@
       try {
         tg.setHeaderColor("#0b0c12");
         tg.setBackgroundColor("#0b0c12");
-      } catch (_) { }
+      } catch (_) {}
     }
 
     const params = new URLSearchParams(window.location.search);
@@ -857,10 +766,11 @@
       sequence: parseSequence(params.get("sequence")),
       challengeId: params.get("challenge_id") || null,
 
+      // Resultado numérico permanece na tela por 6 segundos.
       displayTime: clamp(
-        parseInteger(params.get("display_time"), 3000),
-        500,
-        10000
+        parseInteger(params.get("display_time"), 6000),
+        1000,
+        20000
       ),
 
       timeLimit: clamp(
@@ -905,15 +815,20 @@
       min = Math.ceil(min);
       max = Math.floor(max);
 
-      if (!Number.isSafeInteger(min) ||
+      if (
+        !Number.isSafeInteger(min) ||
         !Number.isSafeInteger(max) ||
-        max < min) {
+        max < min
+      ) {
         throw new Error("Intervalo numérico inválido.");
       }
 
       const range = max - min + 1;
 
-      if (window.crypto?.getRandomValues && range <= 4294967296) {
+      if (
+        window.crypto?.getRandomValues &&
+        range <= 4294967296
+      ) {
         const limit = Math.floor(4294967296 / range) * range;
         const array = new Uint32Array(1);
 
@@ -931,7 +846,7 @@
     }
 
     // ============================================================
-    // TELAS
+    // CONTROLE DE TELAS
     // ============================================================
 
     const screens = {
@@ -957,11 +872,12 @@
     }
 
     // ============================================================
-    // TELEGRAM
+    // ENVIO AO TELEGRAM
     // ============================================================
 
     function sendResult(payload) {
-      if (!tg || typeof tg.sendData !== "function") {
+      if (!isTelegram || typeof tg.sendData !== "function") {
+        console.log("Resultado do Skill Check:", payload);
         return;
       }
 
@@ -1205,6 +1121,10 @@
       }
     }
 
+    // ============================================================
+    // TESTE NUMÉRICO
+    // ============================================================
+
     function clearNumberTimeout() {
       if (numberSendTimeout) {
         clearTimeout(numberSendTimeout);
@@ -1227,8 +1147,8 @@
     function startNumber() {
       clearNumberTimeout();
       cleanupSequence();
-      document.getElementById("sequence-result-overlay")
-        .classList.remove("visible");
+
+      sequenceOverlay.classList.remove("visible");
 
       stopNebulaAnimation();
 
@@ -1254,12 +1174,16 @@
       ) {
         numberStatus.textContent = "Intervalo numérico inválido.";
         numberRolling = false;
-        numberAgain.classList.remove("hidden");
-        numberMenu.classList.remove("hidden");
+
+        if (!isTelegram) {
+          numberAgain.classList.remove("hidden");
+          numberMenu.classList.remove("hidden");
+        }
+
         return;
       }
 
-      // Sorteio definido antes da animação.
+      // O resultado é sorteado antes da animação.
       numberState.result = randomInt(minimum, maximum);
       numberState.minimum = minimum;
       numberState.maximum = maximum;
@@ -1272,9 +1196,7 @@
           updateNebulaColors(Math.random());
         }, 130);
 
-        numberRollTimeout = setTimeout(() => {
-          finishNumber();
-        }, 2600);
+        numberRollTimeout = setTimeout(finishNumber, 2600);
 
       } else {
         numberRollTimeout = setTimeout(finishNumber, 900);
@@ -1303,14 +1225,20 @@
         updateNebulaColors(0.68 - normalized * 0.55);
       }
 
-      // Exibe resultado no formato resultado/máximo.
       numberResult.textContent = `${result}/${max}`;
 
       numberOverlay.classList.add("visible");
       numberStatus.textContent = "Resultado do teste";
 
-      numberAgain.classList.remove("hidden");
-      numberMenu.classList.remove("hidden");
+      // No navegador, os controles continuam disponíveis.
+      // No Telegram, não há menu de repetição ou retorno.
+      if (!isTelegram) {
+        numberAgain.classList.remove("hidden");
+        numberMenu.classList.remove("hidden");
+      } else {
+        numberAgain.classList.add("hidden");
+        numberMenu.classList.add("hidden");
+      }
 
       const payload = {
         type: "skill_check",
@@ -1320,6 +1248,7 @@
         result: result
       };
 
+      // Resultado fica visível por 6 segundos por padrão.
       numberSendTimeout = setTimeout(() => {
         sendResult(payload);
       }, config.displayTime);
@@ -1506,7 +1435,7 @@
 
       currentSymbol.classList.remove("current", "error");
 
-      // Reinicia a animação mesmo se houver erros consecutivos.
+      // Reinicia a animação mesmo em erros consecutivos.
       void currentSymbol.offsetWidth;
 
       currentSymbol.classList.add("error");
@@ -1534,6 +1463,7 @@
       const expected =
         sequenceState.sequence[sequenceState.currentIndex];
 
+      // Todas as entradas são registradas, inclusive os erros.
       sequenceState.inputs.push(direction);
 
       if (direction !== expected) {
@@ -1541,6 +1471,7 @@
 
         flashCurrentSymbolError();
 
+        // Permanece no símbolo atual.
         return;
       }
 
@@ -1563,7 +1494,6 @@
 
       updateSequenceDisplay();
 
-      // Todos os símbolos foram acertados.
       if (sequenceState.currentIndex >= sequenceState.sequence.length) {
         finishSequence("success");
       }
@@ -1594,9 +1524,10 @@
 
       const elapsed = Math.min(
         sequenceState.timeLimit,
-        Math.max(0, Math.round(
-          performance.now() - sequenceState.startTime
-        ))
+        Math.max(
+          0,
+          Math.round(performance.now() - sequenceState.startTime)
+        )
       );
 
       const hits = sequenceState.currentIndex;
@@ -1619,16 +1550,25 @@
         timerBar.style.transform = "scaleX(0)";
       }
 
+      // Dados enviados ao bot.
+      // O servidor poderá recalcular os acertos e erros
+      // usando a sequência original do desafio.
       const payload = {
         type: "skill_check",
         method: "sequence",
+
         challenge_id: config.challengeId,
+
         inputs: [...sequenceState.inputs],
+
         hits: hits,
         errors: errors,
         attempts: attempts,
+
         accuracy: Number(accuracy.toFixed(2)),
+
         time_ms: elapsed,
+
         completed: completed,
         reason: reason
       };
@@ -1646,7 +1586,7 @@
     }
 
     // ============================================================
-    // RESULTADO SOBREPOSTO DA SEQUÊNCIA
+    // PAINEL DE RESULTADO DA SEQUÊNCIA
     // ============================================================
 
     const overlayTitle = document.getElementById("sequence-overlay-title");
@@ -1685,14 +1625,13 @@
 
       accuracyFill.style.width = "0%";
 
-      // Ativa a animação da barra após o painel aparecer.
       requestAnimationFrame(() => {
         accuracyFill.style.width = `${data.accuracy}%`;
       });
 
-      // No modo navegador, permite repetir ou voltar ao menu.
-      // No Telegram, o resultado é enviado automaticamente.
-      if (!tg) {
+      // No navegador, permite repetir ou voltar.
+      // No Telegram, apenas apresenta o resultado e envia ao bot.
+      if (!isTelegram) {
         sequenceAgain.classList.remove("hidden");
         sequenceMenu.classList.remove("hidden");
       } else {
@@ -1702,9 +1641,10 @@
 
       sequenceOverlay.classList.add("visible");
 
+      // Dá mais tempo para o usuário visualizar o resultado.
       sequenceSendTimeout = setTimeout(() => {
         sendResult(data.payload);
-      }, 1400);
+      }, 2800);
     }
 
     // ============================================================
