@@ -1,500 +1,1743 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RPG Skill Check</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0b0c12">
+  <title>Skill Check</title>
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <style>
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 24px 18px;
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      color: var(--tg-theme-text-color, #222);
-      background: var(--tg-theme-bg-color, #fff);
-      display: flex;
-      justify-content: center;
+    :root {
+      color-scheme: dark;
+      --bg: #0b0c12;
+      --panel: #11131c;
+      --panel-light: #191c29;
+      --text: #f3f4fa;
+      --muted: #85899d;
+      --blue: #5595ff;
+      --green: #42d69a;
+      --red: #ff596d;
+      --yellow: #e6b85c;
+      --border: rgba(255, 255, 255, .09);
     }
 
-    main {
+    .app-version {
+      margin-top: 25px;
+      color: #62677a;
+      font-size: 10px;
+      text-align: center;
+      letter-spacing: .8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
       width: 100%;
-      max-width: 420px;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      background:
+        radial-gradient(ellipse at 50% 35%, #171a29 0%, #0b0c12 65%);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      max-width: 460px;
+      animation: screenIn .35s ease both;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes screenIn {
+      from {
+        opacity: 0;
+        transform: translateY(9px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      padding: 28px;
+      background: rgba(17, 19, 28, .9);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: 0 20px 70px rgba(0, 0, 0, .35);
+      backdrop-filter: blur(16px);
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    h1,
+    h2,
+    p {
+      margin-top: 0;
+    }
+
+    h1,
+    h2 {
+      text-align: center;
+      letter-spacing: -.5px;
+    }
+
+    h1 {
+      font-size: 25px;
+      margin-bottom: 9px;
+    }
+
+    h2 {
+      font-size: 21px;
+      margin-bottom: 10px;
+    }
+
+    .description {
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.55;
+      margin-bottom: 24px;
+    }
+
+    .primary-button {
+      width: 100%;
+      min-height: 52px;
+      border: 0;
+      border-radius: 13px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform .15s, filter .15s;
+    }
+
+    .primary-button:active {
+      transform: scale(.98);
+      filter: brightness(.9);
+    }
+
+    .secondary-button {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 11px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: var(--panel-light);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    /* MENU */
+
+    .menu-options {
+      display: grid;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .menu-option {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      width: 100%;
+      padding: 17px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel-light);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+
+    .menu-option:active {
+      background: #22283a;
+      border-color: var(--blue);
+    }
+
+    .menu-icon {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: rgba(85, 149, 255, .13);
+      color: var(--blue);
+      font-size: 21px;
+    }
+
+    .menu-option strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .menu-option small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* TESTE NUMÉRICO */
+
+    #number-screen .card {
+      overflow: hidden;
+      padding: 24px 20px 28px;
+    }
+
+    .nebula-container {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      margin: 4px auto 8px;
+      overflow: hidden;
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at center, rgba(58, 66, 112, .15), transparent 65%);
+    }
+
+    #nebula-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .number-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(.75);
+      transition: opacity .55s ease, transform .55s cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .number-overlay.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    #number-result {
+      color: #fff;
+      font-size: clamp(65px, 18vw, 96px);
+      line-height: 1;
+      font-weight: 850;
+      letter-spacing: -4px;
+      white-space: nowrap;
+      text-shadow:
+        0 0 18px rgba(255, 255, 255, .35),
+        0 0 50px rgba(118, 139, 255, .5);
+    }
+
+    .number-status {
+      min-height: 22px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    /* TESTE DE SEQUÊNCIA */
+
+    #sequence-screen .card {
+      padding: 26px 22px 24px;
+      overflow: hidden;
+    }
+
+    .sequence-header {
+      margin-bottom: 25px;
+    }
+
+    .sequence-header h1 {
+      margin-bottom: 8px;
+    }
+
+    .sequence-header p {
+      margin-bottom: 0;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .timer-track {
+      width: 100%;
+      height: 6px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      border-radius: 20px;
+      background: #292c39;
+    }
+
+    .timer-bar {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--blue);
+      transform: scaleX(1);
+      transform-origin: left center;
+      will-change: transform;
+    }
+
+    .sequence-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 19px;
+    }
+
+    .sequence-symbol {
+      aspect-ratio: 1;
+      min-width: 0;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, .07);
+      border-radius: 12px;
+      background: #191b25;
+      color: #777c8d;
+      font-size: clamp(21px, 7vw, 29px);
+      font-weight: 800;
+      transition:
+        background .18s,
+        color .18s,
+        border-color .18s,
+        transform .18s,
+        box-shadow .18s;
+    }
+
+    .sequence-symbol.current {
+      color: #fff;
+      background: rgba(85, 149, 255, .16);
+      border-color: var(--blue);
+      box-shadow: 0 0 18px rgba(85, 149, 255, .2);
+      transform: translateY(-3px);
+    }
+
+    .sequence-symbol.completed {
+      color: var(--green);
+      background: rgba(66, 214, 154, .12);
+      border-color: rgba(66, 214, 154, .5);
+    }
+
+    .sequence-symbol.error {
+      color: #fff;
+      background: rgba(255, 89, 109, .25);
+      border-color: var(--red);
+      box-shadow: 0 0 18px rgba(255, 89, 109, .25);
+      animation: errorShake .25s ease;
+    }
+
+    @keyframes errorShake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-4px);
+      }
+
+      75% {
+        transform: translateX(4px);
+      }
+    }
+
+    .sequence-progress {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 22px;
+    }
+
+    .sequence-progress strong {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .input-hint {
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+      margin-bottom: 13px;
+    }
+
+    .direction-pad {
+      display: grid;
+      grid-template-columns: repeat(3, 58px);
+      grid-template-rows: repeat(2, 52px);
+      justify-content: center;
+      gap: 8px;
+      user-select: none;
+    }
+
+    .direction-button {
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #1b1e2a;
+      color: #e9ecf7;
+      font-size: 23px;
+      font-weight: 800;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: background .1s, transform .1s, border-color .1s;
+    }
+
+    .direction-button:active {
+      transform: scale(.94);
+      background: #303a54;
+      border-color: var(--blue);
+    }
+
+    .direction-button[data-direction="UP"] {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .direction-button[data-direction="LEFT"] {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .direction-button[data-direction="DOWN"] {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .direction-button[data-direction="RIGHT"] {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    .direction-button:disabled {
+      opacity: .35;
+      pointer-events: none;
+    }
+
+    /* PAINEL DE RESULTADO SOBREPOSTO */
+
+    .sequence-result-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(7, 9, 15, .78);
+      backdrop-filter: blur(10px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .3s ease, visibility .3s ease;
+    }
+
+    .sequence-result-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .sequence-result-panel {
+      width: 100%;
+      max-width: 340px;
+      padding: 23px 20px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 18px;
+      background: rgba(22, 25, 37, .97);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, .45);
+      transform: translateY(10px) scale(.97);
+      transition: transform .3s ease;
+    }
+
+    .sequence-result-overlay.visible .sequence-result-panel {
+      transform: translateY(0) scale(1);
+    }
+
+    .overlay-status {
+      color: var(--muted);
+      text-align: center;
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .overlay-title {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 19px;
+    }
+
+    .accuracy-block {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .accuracy-value {
+      font-size: 43px;
+      line-height: 1.1;
+      font-weight: 850;
+      letter-spacing: -2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .accuracy-label {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 5px;
+    }
+
+    .accuracy-track {
+      height: 8px;
+      overflow: hidden;
+      margin-top: 13px;
+      border-radius: 20px;
+      background: #303342;
+    }
+
+    .accuracy-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--green);
+      transition: width .7s ease;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .stat-box {
+      min-width: 0;
+      padding: 12px 5px;
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, .035);
       text-align: center;
     }
 
-    h1 { font-size: 25px; margin: 12px 0; }
-    p { color: var(--tg-theme-hint-color, #777); }
-
-    button {
-      border: 0;
-      border-radius: 12px;
-      padding: 15px 20px;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
-      color: var(--tg-theme-button-text-color, white);
-      background: var(--tg-theme-button-color, #2481cc);
+    .stat-value {
+      font-size: 21px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
     }
 
-    button:disabled { opacity: .4; cursor: default; }
+    .stat-label {
+      color: var(--muted);
+      font-size: 10px;
+      margin-top: 4px;
+    }
 
-    .primary {
+    .stat-box.hits .stat-value {
+      color: var(--green);
+    }
+
+    .stat-box.errors .stat-value {
+      color: var(--red);
+    }
+
+    .overlay-summary {
+      color: var(--muted);
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.5;
+      margin-bottom: 17px;
+    }
+
+    /* RESULTADO NUMÉRICO */
+
+    .number-result-panel {
       width: 100%;
-      margin-top: 14px;
+      max-width: 340px;
+      padding: 23px 20px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 18px;
+      background: rgba(22, 25, 37, .97);
+      text-align: center;
     }
 
-    .secondary {
-      width: 100%;
-      margin-top: 12px;
-      background: var(--tg-theme-secondary-bg-color, #ddd);
-      color: var(--tg-theme-text-color, #222);
-    }
-
-    .hidden { display: none !important; }
-
-    .version {
-      margin-top: 8px;
+    .number-result-heading {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: 2px;
       margin-bottom: 8px;
+    }
+
+    .number-result-ratio {
+      font-size: 36px;
+      font-weight: 850;
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .number-result-caption {
+      color: var(--muted);
       font-size: 12px;
-      color: var(--tg-theme-hint-color, #888);
+      margin-bottom: 18px;
     }
 
-    .github-link {
-      display: inline-block;
-      margin-bottom: 16px;
-      color: var(--tg-theme-link-color, #2481cc);
-      font-size: 13px;
-      text-decoration: none;
+    /* BOTÕES E ESTADOS */
+
+    .hidden {
+      display: none !important;
     }
 
-    .github-link:hover { text-decoration: underline; }
+    @media (max-width: 360px) {
+      body {
+        padding: 10px;
+      }
 
-    .number {
-      font-size: 76px;
-      font-weight: bold;
-      margin: 35px 0;
+      .card {
+        padding: 22px 15px;
+      }
+
+      #sequence-screen .card {
+        padding: 22px 13px;
+      }
+
+      .sequence-grid {
+        gap: 5px;
+      }
+
+      .sequence-symbol {
+        border-radius: 9px;
+      }
+
+      .sequence-result-overlay {
+        padding: 12px;
+      }
+
+      .sequence-result-panel {
+        padding: 18px 13px;
+      }
+
+      .stat-value {
+        font-size: 18px;
+      }
     }
 
-    .sequence {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 28px 0;
-      min-height: 55px;
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+      }
     }
-
-    .symbol {
-      font-size: 27px;
-      width: 48px;
-      height: 48px;
-      display: grid;
-      place-items: center;
-      border-radius: 8px;
-      background: var(--tg-theme-secondary-bg-color, #eee);
-    }
-
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(3, 70px);
-      gap: 9px;
-      justify-content: center;
-      margin: 25px auto;
-    }
-
-    .controls button {
-      width: 70px;
-      height: 62px;
-      padding: 0;
-      font-size: 27px;
-    }
-
-    .controls .up { grid-column: 2; }
-    .controls .left { grid-column: 1; grid-row: 2; }
-    .controls .down { grid-column: 2; grid-row: 2; }
-    .controls .right { grid-column: 3; grid-row: 2; }
-
-    .status { font-size: 18px; margin-top: 18px; }
-    .timer { font-size: 24px; font-weight: bold; }
-    .muted { color: var(--tg-theme-hint-color, #777); }
-    .result-icon { font-size: 48px; margin-top: 25px; }
   </style>
 </head>
 
 <body>
-<main>
-  <h1>RPG Skill Check</h1>
 
-  <!-- MENU DE DEMONSTRAÇÃO -->
-  <section id="menu-screen" class="hidden">
-    <p>Modo de demonstração</p>
+  <!-- MENU -->
+  <section id="menu-screen" class="screen">
+    <div class="card">
+      <div class="eyebrow">Desafio de perícia</div>
+      <h1>Escolha um teste</h1>
+      <p class="description">
+        Prepare-se para realizar seu teste de habilidade.
+      </p>
 
-    <div class="version">Versão 1.0.1</div>
+      <div class="menu-options">
+        <button class="menu-option" onclick="startNumber()">
+          <span class="menu-icon">✧</span>
+          <span>
+            <strong>Teste numérico</strong>
+            <small>Um número será sorteado dentro do intervalo</small>
+          </span>
+        </button>
 
-    <a
-      class="github-link"
-      href="https://github.com/raphaelwb/rpg-skill-check"
-      target="_blank"
-      rel="noopener noreferrer"
-    >Projeto no GitHub</a>
-
-    <p>Escolha um teste para experimentar.</p>
-    <button id="demo-number" class="primary">Teste básico</button>
-    <button id="demo-sequence" class="secondary">Teste de sequência</button>
+        <button class="menu-option" onclick="startSequence()">
+          <span class="menu-icon">⌁</span>
+          <span>
+            <strong>Teste de sequência</strong>
+            <small>Reproduza a sequência antes que o tempo acabe</small>
+          </span>
+        </button>
+      </div>
+    </div>
+    <div class="app-version">Skill Check · v1.0.4</div>
   </section>
 
   <!-- TESTE NUMÉRICO -->
-  <section id="number-screen" class="hidden">
-    <p>Teste básico</p>
-    <div id="number-value" class="number">?</div>
-    <p id="number-range"></p>
-    <button id="roll-button" class="primary">Rolar</button>
+  <section id="number-screen" class="screen">
+    <div class="card">
+      <div class="eyebrow">Teste numérico</div>
+
+      <div class="nebula-container">
+        <canvas id="nebula-canvas"></canvas>
+
+        <div id="number-overlay" class="number-overlay">
+          <span id="number-result">0/100</span>
+        </div>
+      </div>
+
+      <div id="number-status" class="number-status">
+        Preparando sorteio...
+      </div>
+
+      <button id="number-again" class="primary-button hidden" onclick="startNumber()">
+        Sortear novamente
+      </button>
+
+      <button id="number-menu" class="secondary-button hidden" onclick="goToMenu()">
+        Voltar ao menu
+      </button>
+    </div>
   </section>
 
   <!-- TESTE DE SEQUÊNCIA -->
-  <section id="sequence-screen" class="hidden">
-    <p>Reproduza a sequência na ordem apresentada.</p>
+  <section id="sequence-screen" class="screen">
+    <div class="card">
 
-    <div id="sequence-display" class="sequence"></div>
-
-    <div id="sequence-play">
-      <div id="timer" class="timer"></div>
-      <div id="progress" class="status"></div>
-
-      <div class="controls">
-        <button class="up" data-symbol="UP">↑</button>
-        <button class="left" data-symbol="LEFT">←</button>
-        <button class="down" data-symbol="DOWN">↓</button>
-        <button class="right" data-symbol="RIGHT">→</button>
+      <div class="sequence-header">
+        <div class="eyebrow">Teste de perícia</div>
+        <h1>Reproduza a sequência</h1>
+        <p>Pressione as direções na ordem apresentada.</p>
       </div>
+
+      <div class="timer-track">
+        <div id="timer-bar" class="timer-bar"></div>
+      </div>
+
+      <div id="sequence-grid" class="sequence-grid"></div>
+
+      <div class="sequence-progress">
+        <span>Progresso</span>
+        <strong id="sequence-progress">0 / 5</strong>
+      </div>
+
+      <div class="input-hint">
+        Use as setas do teclado ou os controles abaixo.
+      </div>
+
+      <div id="direction-pad" class="direction-pad">
+        <button class="direction-button" data-direction="UP" aria-label="Cima">▲</button>
+        <button class="direction-button" data-direction="LEFT" aria-label="Esquerda">◀</button>
+        <button class="direction-button" data-direction="DOWN" aria-label="Baixo">▼</button>
+        <button class="direction-button" data-direction="RIGHT" aria-label="Direita">▶</button>
+      </div>
+
+      <!-- PAINEL SOBREPOSTO -->
+      <div id="sequence-result-overlay" class="sequence-result-overlay">
+        <div class="sequence-result-panel">
+
+          <div class="overlay-status">Resultado do teste</div>
+          <div id="sequence-overlay-title" class="overlay-title">
+            Desafio concluído
+          </div>
+
+          <div class="accuracy-block">
+            <div id="accuracy-value" class="accuracy-value">100%</div>
+            <div class="accuracy-label">Precisão das tentativas</div>
+
+            <div class="accuracy-track">
+              <div id="accuracy-fill" class="accuracy-fill"></div>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-box hits">
+              <div id="stat-hits" class="stat-value">0</div>
+              <div class="stat-label">Acertos</div>
+            </div>
+
+            <div class="stat-box errors">
+              <div id="stat-errors" class="stat-value">0</div>
+              <div class="stat-label">Erros</div>
+            </div>
+
+            <div class="stat-box">
+              <div id="stat-time" class="stat-value">0s</div>
+              <div class="stat-label">Tempo</div>
+            </div>
+          </div>
+
+          <div id="overlay-summary" class="overlay-summary">
+            5 acertos em 5 tentativas.
+          </div>
+
+          <button id="sequence-again" class="primary-button hidden" onclick="startSequence()">
+            Tentar novamente
+          </button>
+
+          <button id="sequence-menu" class="secondary-button hidden" onclick="goToMenu()">
+            Voltar ao menu
+          </button>
+        </div>
+      </div>
+
     </div>
-
-    <p class="muted">Você também pode usar as setas do teclado.</p>
   </section>
 
-  <!-- RESULTADO -->
-  <section id="result-screen" class="hidden">
-    <div id="result-icon" class="result-icon"></div>
-    <h1 id="result-title"></h1>
-    <p id="result-message"></p>
-    <p id="result-countdown" class="muted"></p>
-  </section>
+  <script>
+    "use strict";
 
-  <p id="error-message" class="status"></p>
-</main>
+    // ============================================================
+    // CONFIGURAÇÃO
+    // ============================================================
 
-<script>
-(() => {
-  const APP_VERSION = "1.0.1";
+    const APP_VERSION = "1.0.4";
 
-  const tg = window.Telegram?.WebApp;
-  tg?.ready();
-  tg?.expand();
+    const tg = window.Telegram?.WebApp || null;
 
-  const params = new URLSearchParams(location.search);
-  const requestedMethod = params.get("method");
+    if (tg) {
+      tg.ready();
+      tg.expand();
 
-  // Sem método na URL, a página está em modo de demonstração.
-  const demoMode = !requestedMethod;
+      try {
+        tg.setHeaderColor("#0b0c12");
+        tg.setBackgroundColor("#0b0c12");
+      } catch (_) { }
+    }
 
-  const $ = id => document.getElementById(id);
+    const params = new URLSearchParams(window.location.search);
 
-  const screens = [
-    "menu-screen",
-    "number-screen",
-    "sequence-screen",
-    "result-screen"
-  ];
+    const config = {
+      method: params.get("method") || "demo",
 
-  function showScreen(id) {
-    screens.forEach(screen => $(screen).classList.add("hidden"));
-    $(id).classList.remove("hidden");
-    $("error-message").textContent = "";
-  }
+      minimum: parseInteger(params.get("minimum"), 1),
+      maximum: parseInteger(params.get("maximum"), 100),
 
-  function randomInt(min, max) {
-    const range = max - min + 1;
-    const array = new Uint32Array(1);
-    const limit = Math.floor(0x100000000 / range) * range;
+      sequence: parseSequence(params.get("sequence")),
+      challengeId: params.get("challenge_id") || null,
 
-    let value;
-    do {
-      crypto.getRandomValues(array);
-      value = array[0];
-    } while (value >= limit);
+      displayTime: clamp(
+        parseInteger(params.get("display_time"), 3000),
+        500,
+        10000
+      ),
 
-    return min + (value % range);
-  }
+      timeLimit: clamp(
+        parseInteger(params.get("time_limit"), 15000),
+        1000,
+        120000
+      )
+    };
 
-  function randomSequence(length) {
-    const symbols = ["UP", "DOWN", "LEFT", "RIGHT"];
-    return Array.from(
-      { length },
-      () => symbols[randomInt(0, symbols.length - 1)]
-    );
-  }
+    function parseInteger(value, fallback) {
+      if (value === null || value.trim() === "") return fallback;
 
-  function showResult(title, message, payload, success) {
-    showScreen("result-screen");
+      const parsed = Number(value);
 
-    $("result-icon").textContent = success ? "✅" : "❌";
-    $("result-title").textContent = title;
-    $("result-message").textContent = message;
+      return Number.isSafeInteger(parsed) ? parsed : fallback;
+    }
 
-    let remaining = 1;
+    function parseSequence(value) {
+      if (!value) return null;
 
-    $("result-countdown").textContent =
-      `Retornando em ${remaining} segundo(s)...`;
+      const valid = ["UP", "DOWN", "LEFT", "RIGHT"];
 
-    // Aguarda 1 segundo para o jogador visualizar o resultado.
-    setTimeout(() => {
-      if (demoMode) {
-        $("result-countdown").textContent =
-          "Demonstração concluída.";
+      const sequence = value
+        .split(",")
+        .map(item => item.trim().toUpperCase());
+
+      if (
+        sequence.length === 0 ||
+        sequence.some(item => !valid.includes(item))
+      ) {
+        return null;
+      }
+
+      return sequence;
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function randomInt(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+
+      if (!Number.isSafeInteger(min) ||
+        !Number.isSafeInteger(max) ||
+        max < min) {
+        throw new Error("Intervalo numérico inválido.");
+      }
+
+      const range = max - min + 1;
+
+      if (window.crypto?.getRandomValues && range <= 4294967296) {
+        const limit = Math.floor(4294967296 / range) * range;
+        const array = new Uint32Array(1);
+
+        let value;
+
+        do {
+          crypto.getRandomValues(array);
+          value = array[0];
+        } while (value >= limit);
+
+        return min + (value % range);
+      }
+
+      return Math.floor(Math.random() * range) + min;
+    }
+
+    // ============================================================
+    // TELAS
+    // ============================================================
+
+    const screens = {
+      menu: document.getElementById("menu-screen"),
+      number: document.getElementById("number-screen"),
+      sequence: document.getElementById("sequence-screen")
+    };
+
+    function showScreen(name) {
+      Object.values(screens).forEach(screen => {
+        screen.classList.remove("active");
+      });
+
+      screens[name].classList.add("active");
+    }
+
+    function goToMenu() {
+      clearNumberTimeout();
+      cleanupSequence();
+      stopNebulaAnimation();
+
+      showScreen("menu");
+    }
+
+    // ============================================================
+    // TELEGRAM
+    // ============================================================
+
+    function sendResult(payload) {
+      if (!tg || typeof tg.sendData !== "function") {
         return;
       }
 
-      $("result-countdown").textContent = "Enviando resultado...";
-
-      if (tg) {
+      try {
         tg.sendData(JSON.stringify(payload));
-      } else {
-        $("result-countdown").textContent =
-          "Não foi possível enviar o resultado ao Telegram.";
+      } catch (error) {
+        console.error("Não foi possível enviar o resultado:", error);
       }
-    }, 1000);
-  }
-
-  // TESTE BÁSICO
-  function startNumber(min, max) {
-    if (
-      !Number.isSafeInteger(min) ||
-      !Number.isSafeInteger(max) ||
-      min > max ||
-      max - min >= 0x100000000
-    ) {
-      $("error-message").textContent = "Intervalo numérico inválido.";
-      return;
     }
 
-    showScreen("number-screen");
+    // ============================================================
+    // NEBULOSA CROMÁTICA
+    // ============================================================
 
-    $("number-value").textContent = "?";
-    $("number-range").textContent = `Intervalo: ${min} até ${max}`;
-    $("roll-button").disabled = false;
+    const nebulaCanvas = document.getElementById("nebula-canvas");
+    const numberOverlay = document.getElementById("number-overlay");
+    const numberResult = document.getElementById("number-result");
+    const numberStatus = document.getElementById("number-status");
 
-    $("roll-button").onclick = () => {
-      const result = randomInt(min, max);
-      $("number-value").textContent = result;
-      $("roll-button").disabled = true;
+    const numberAgain = document.getElementById("number-again");
+    const numberMenu = document.getElementById("number-menu");
 
-      showResult(
-        "Rolagem concluída",
-        `Resultado: ${result}`,
-        {
-          type: "skill_check",
-          method: "number",
-          minimum: min,
-          maximum: max,
-          result
-        },
-        true
-      );
-    };
-  }
+    let renderer = null;
+    let scene = null;
+    let camera = null;
+    let nebula = null;
 
-  // TESTE DE SEQUÊNCIA
-  function startSequence(sequence, challengeId, timeLimit) {
-    const validSymbols = ["UP", "DOWN", "LEFT", "RIGHT"];
+    let nebulaPositions = null;
+    let nebulaColors = null;
 
-    if (
-      !Array.isArray(sequence) ||
-      sequence.length === 0 ||
-      !sequence.every(symbol => validSymbols.includes(symbol)) ||
-      !Number.isSafeInteger(timeLimit) ||
-      timeLimit <= 0 ||
-      timeLimit > 3600000
-    ) {
-      $("error-message").textContent =
-        "Configuração da sequência inválida.";
-      return;
-    }
+    let nebulaAnimationFrame = null;
+    let nebulaStartTime = 0;
+    let nebulaInitialized = false;
 
-    showScreen("sequence-screen");
+    let numberSendTimeout = null;
+    let numberRollTimeout = null;
+    let numberColorInterval = null;
+    let numberRolling = false;
 
-    const arrows = {
-      UP: "↑",
-      DOWN: "↓",
-      LEFT: "←",
-      RIGHT: "→"
+    const PARTICLE_COUNT = 1400;
+
+    const numberState = {
+      result: null,
+      minimum: config.minimum,
+      maximum: config.maximum
     };
 
-    // A sequência permanece visível durante todo o desafio.
-    $("sequence-display").innerHTML = "";
+    function initNebula() {
+      if (nebulaInitialized) return true;
+      if (!window.THREE) return false;
 
-    sequence.forEach(symbol => {
-      const item = document.createElement("div");
-      item.className = "symbol";
-      item.textContent = arrows[symbol];
-      $("sequence-display").appendChild(item);
-    });
+      try {
+        const width = Math.max(1, nebulaCanvas.clientWidth);
+        const height = Math.max(1, nebulaCanvas.clientHeight);
 
-    let inputs = [];
-    let startedAt = performance.now();
-    let finished = false;
-    let timeoutId;
-    let timerInterval;
+        scene = new THREE.Scene();
 
-    const buttons = document.querySelectorAll("[data-symbol]");
-
-    function elapsed() {
-      return Math.max(0, Math.round(performance.now() - startedAt));
-    }
-
-    function updateProgress() {
-      $("progress").textContent =
-        `${inputs.length} de ${sequence.length} direções`;
-    }
-
-    function finish(success, reason) {
-      if (finished) return;
-      finished = true;
-
-      clearTimeout(timeoutId);
-      clearInterval(timerInterval);
-
-      buttons.forEach(button => button.disabled = true);
-
-      if (window.sequenceKeyHandler) {
-        document.removeEventListener(
-          "keydown",
-          window.sequenceKeyHandler
+        camera = new THREE.PerspectiveCamera(
+          55,
+          width / height,
+          0.1,
+          100
         );
-        window.sequenceKeyHandler = null;
+
+        camera.position.z = 5;
+
+        renderer = new THREE.WebGLRenderer({
+          canvas: nebulaCanvas,
+          alpha: true,
+          antialias: false,
+          powerPreference: "low-power"
+        });
+
+        renderer.setPixelRatio(
+          Math.min(window.devicePixelRatio || 1, 1.5)
+        );
+
+        renderer.setSize(width, height, false);
+
+        const geometry = new THREE.BufferGeometry();
+
+        nebulaPositions = new Float32Array(PARTICLE_COUNT * 3);
+        nebulaColors = new Float32Array(PARTICLE_COUNT * 3);
+
+        const originalPositions = new Float32Array(PARTICLE_COUNT * 3);
+        const sizes = new Float32Array(PARTICLE_COUNT);
+
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          const i3 = i * 3;
+
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.acos(2 * Math.random() - 1);
+          const radius = 1.15 + Math.random() * 1.5;
+
+          const x = radius * Math.sin(phi) * Math.cos(theta);
+          const y = radius * Math.sin(phi) * Math.sin(theta);
+          const z = radius * Math.cos(phi);
+
+          originalPositions[i3] = x;
+          originalPositions[i3 + 1] = y;
+          originalPositions[i3 + 2] = z;
+
+          nebulaPositions[i3] = x;
+          nebulaPositions[i3 + 1] = y;
+          nebulaPositions[i3 + 2] = z;
+
+          sizes[i] = 0.5 + Math.random() * 1.5;
+
+          nebulaColors[i3] = 0.4;
+          nebulaColors[i3 + 1] = 0.5;
+          nebulaColors[i3 + 2] = 1;
+        }
+
+        geometry.setAttribute(
+          "position",
+          new THREE.BufferAttribute(nebulaPositions, 3)
+        );
+
+        geometry.setAttribute(
+          "color",
+          new THREE.BufferAttribute(nebulaColors, 3)
+        );
+
+        geometry.setAttribute(
+          "size",
+          new THREE.BufferAttribute(sizes, 1)
+        );
+
+        geometry.attributes.position.setUsage(THREE.DynamicDrawUsage);
+        geometry.attributes.color.setUsage(THREE.DynamicDrawUsage);
+
+        const material = new THREE.PointsMaterial({
+          size: 0.035,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.85,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          sizeAttenuation: true
+        });
+
+        nebula = new THREE.Points(geometry, material);
+        nebula.userData.originalPositions = originalPositions;
+
+        scene.add(nebula);
+
+        nebulaInitialized = true;
+        resizeNebula();
+
+        window.addEventListener("resize", resizeNebula);
+
+        return true;
+
+      } catch (error) {
+        console.warn("Falha ao inicializar a nebulosa:", error);
+        return false;
       }
-
-      const timeMs = Math.min(elapsed(), timeLimit);
-
-      showResult(
-        success ? "Desafio concluído!" : "Desafio encerrado",
-        `${reason}\nDireções corretas: ${success ? sequence.length : inputs.filter((v, i) => v === sequence[i]).length}/${sequence.length}\nTempo: ${timeMs} ms`,
-        {
-          type: "skill_check",
-          method: "sequence",
-          challenge_id: challengeId,
-          inputs,
-          time_ms: timeMs
-        },
-        success
-      );
     }
 
-    function inputSymbol(symbol) {
-      if (finished) return;
+    function resizeNebula() {
+      if (!renderer || !camera) return;
 
-      inputs.push(symbol);
-      updateProgress();
+      const width = Math.max(1, nebulaCanvas.clientWidth);
+      const height = Math.max(1, nebulaCanvas.clientHeight);
 
-      const index = inputs.length - 1;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
 
-      if (inputs[index] !== sequence[index]) {
-        finish(false, "Você errou uma direção.");
+      renderer.setSize(width, height, false);
+    }
+
+    function updateNebulaColors(hue) {
+      if (!nebulaColors || !window.THREE) return;
+
+      const color = new THREE.Color();
+      color.setHSL(hue, 0.8, 0.65);
+
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const i3 = i * 3;
+        const variation = 0.65 + Math.random() * 0.35;
+
+        nebulaColors[i3] = color.r * variation;
+        nebulaColors[i3 + 1] = color.g * variation;
+        nebulaColors[i3 + 2] = color.b * variation;
+      }
+
+      nebula.geometry.attributes.color.needsUpdate = true;
+    }
+
+    function animateNebula() {
+      if (!renderer || !scene || !camera || !nebula) return;
+
+      const elapsed = (performance.now() - nebulaStartTime) / 1000;
+
+      nebula.rotation.y = elapsed * 0.12;
+      nebula.rotation.x = Math.sin(elapsed * 0.2) * 0.12;
+
+      const original = nebula.userData.originalPositions;
+      const agitation = numberRolling ? 0.12 : 0.025;
+      const speed = numberRolling ? 2.2 : 0.7;
+
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const i3 = i * 3;
+
+        const x = original[i3];
+        const y = original[i3 + 1];
+        const z = original[i3 + 2];
+
+        nebulaPositions[i3] =
+          x + Math.sin(elapsed * speed + i * 0.08) * agitation;
+
+        nebulaPositions[i3 + 1] =
+          y + Math.cos(elapsed * speed + i * 0.05) * agitation;
+
+        nebulaPositions[i3 + 2] =
+          z + Math.sin(elapsed * speed + i * 0.03) * agitation;
+      }
+
+      nebula.geometry.attributes.position.needsUpdate = true;
+
+      renderer.render(scene, camera);
+
+      nebulaAnimationFrame = requestAnimationFrame(animateNebula);
+    }
+
+    function startNebulaAnimation() {
+      if (!initNebula()) return false;
+
+      stopNebulaAnimation();
+
+      nebulaStartTime = performance.now();
+      animateNebula();
+
+      return true;
+    }
+
+    function stopNebulaAnimation() {
+      if (nebulaAnimationFrame) {
+        cancelAnimationFrame(nebulaAnimationFrame);
+        nebulaAnimationFrame = null;
+      }
+    }
+
+    function clearNumberTimeout() {
+      if (numberSendTimeout) {
+        clearTimeout(numberSendTimeout);
+        numberSendTimeout = null;
+      }
+
+      if (numberRollTimeout) {
+        clearTimeout(numberRollTimeout);
+        numberRollTimeout = null;
+      }
+
+      if (numberColorInterval) {
+        clearInterval(numberColorInterval);
+        numberColorInterval = null;
+      }
+
+      numberRolling = false;
+    }
+
+    function startNumber() {
+      clearNumberTimeout();
+      cleanupSequence();
+      document.getElementById("sequence-result-overlay")
+        .classList.remove("visible");
+
+      stopNebulaAnimation();
+
+      numberRolling = true;
+
+      numberAgain.classList.add("hidden");
+      numberMenu.classList.add("hidden");
+
+      numberOverlay.classList.remove("visible");
+      numberResult.textContent = "";
+
+      numberStatus.textContent = "Gerando resultado...";
+
+      showScreen("number");
+
+      const minimum = config.minimum;
+      const maximum = config.maximum;
+
+      if (
+        !Number.isSafeInteger(minimum) ||
+        !Number.isSafeInteger(maximum) ||
+        maximum < minimum
+      ) {
+        numberStatus.textContent = "Intervalo numérico inválido.";
+        numberRolling = false;
+        numberAgain.classList.remove("hidden");
+        numberMenu.classList.remove("hidden");
         return;
       }
 
-      if (inputs.length === sequence.length) {
-        finish(true, "Você reproduziu toda a sequência corretamente.");
+      // Sorteio definido antes da animação.
+      numberState.result = randomInt(minimum, maximum);
+      numberState.minimum = minimum;
+      numberState.maximum = maximum;
+
+      const hasNebula = startNebulaAnimation();
+
+      if (hasNebula) {
+        numberColorInterval = setInterval(() => {
+          if (!numberRolling) return;
+          updateNebulaColors(Math.random());
+        }, 130);
+
+        numberRollTimeout = setTimeout(() => {
+          finishNumber();
+        }, 2600);
+
+      } else {
+        numberRollTimeout = setTimeout(finishNumber, 900);
       }
     }
 
-    buttons.forEach(button => {
-      button.disabled = false;
-      button.onclick = () => inputSymbol(button.dataset.symbol);
-    });
+    function finishNumber() {
+      if (!numberRolling) return;
 
-    // Remove listeners de desafios anteriores.
-    if (window.sequenceKeyHandler) {
-      document.removeEventListener(
-        "keydown",
-        window.sequenceKeyHandler
-      );
-    }
+      numberRolling = false;
 
-    window.sequenceKeyHandler = event => {
-      const keys = {
-        ArrowUp: "UP",
-        ArrowDown: "DOWN",
-        ArrowLeft: "LEFT",
-        ArrowRight: "RIGHT"
+      if (numberColorInterval) {
+        clearInterval(numberColorInterval);
+        numberColorInterval = null;
+      }
+
+      const result = numberState.result;
+      const min = numberState.minimum;
+      const max = numberState.maximum;
+
+      if (nebulaInitialized) {
+        const normalized = max === min
+          ? 0.5
+          : (result - min) / (max - min);
+
+        updateNebulaColors(0.68 - normalized * 0.55);
+      }
+
+      // Exibe resultado no formato resultado/máximo.
+      numberResult.textContent = `${result}/${max}`;
+
+      numberOverlay.classList.add("visible");
+      numberStatus.textContent = "Resultado do teste";
+
+      numberAgain.classList.remove("hidden");
+      numberMenu.classList.remove("hidden");
+
+      const payload = {
+        type: "skill_check",
+        method: "number",
+        minimum: min,
+        maximum: max,
+        result: result
       };
 
-      if (keys[event.key]) {
-        event.preventDefault();
-        inputSymbol(keys[event.key]);
-      }
+      numberSendTimeout = setTimeout(() => {
+        sendResult(payload);
+      }, config.displayTime);
+    }
+
+    // ============================================================
+    // TESTE DE SEQUÊNCIA
+    // ============================================================
+
+    const sequenceGrid = document.getElementById("sequence-grid");
+    const sequenceProgress = document.getElementById("sequence-progress");
+    const timerBar = document.getElementById("timer-bar");
+    const directionPad = document.getElementById("direction-pad");
+
+    const sequenceOverlay = document.getElementById("sequence-result-overlay");
+
+    const DIRECTION_SYMBOLS = {
+      UP: "▲",
+      DOWN: "▼",
+      LEFT: "◀",
+      RIGHT: "▶"
     };
 
-    document.addEventListener("keydown", window.sequenceKeyHandler);
+    const KEY_DIRECTIONS = {
+      ArrowUp: "UP",
+      ArrowDown: "DOWN",
+      ArrowLeft: "LEFT",
+      ArrowRight: "RIGHT"
+    };
 
-    updateProgress();
+    const sequenceState = {
+      sequence: [],
+      inputs: [],
+      currentIndex: 0,
+      errors: 0,
+      startTime: 0,
+      deadline: 0,
+      timeLimit: 0,
+      animationFrame: null,
+      active: false,
+      finished: false,
+      errorFlashTimeout: null
+    };
 
-    timeoutId = setTimeout(() => {
-      finish(false, "O tempo acabou.");
-    }, timeLimit);
+    function generateSequence(length) {
+      const directions = ["UP", "DOWN", "LEFT", "RIGHT"];
 
-    const timer = $("timer");
-    timer.textContent = `${(timeLimit / 1000).toFixed(1)}s`;
+      return Array.from(
+        { length },
+        () => directions[randomInt(0, directions.length - 1)]
+      );
+    }
 
-    timerInterval = setInterval(() => {
-      if (finished) {
-        clearInterval(timerInterval);
+    function renderSequence() {
+      sequenceGrid.innerHTML = "";
+
+      sequenceState.sequence.forEach((direction, index) => {
+        const symbol = document.createElement("div");
+
+        symbol.className = "sequence-symbol";
+        symbol.textContent = DIRECTION_SYMBOLS[direction];
+        symbol.dataset.index = String(index);
+
+        sequenceGrid.appendChild(symbol);
+      });
+
+      updateSequenceDisplay();
+    }
+
+    function updateSequenceDisplay() {
+      const symbols = sequenceGrid.querySelectorAll(".sequence-symbol");
+
+      symbols.forEach((symbol, index) => {
+        symbol.classList.remove("current", "completed");
+
+        if (index < sequenceState.currentIndex) {
+          symbol.classList.add("completed");
+        } else if (
+          index === sequenceState.currentIndex &&
+          sequenceState.active &&
+          !symbol.classList.contains("error")
+        ) {
+          symbol.classList.add("current");
+        }
+      });
+
+      sequenceProgress.textContent =
+        `${sequenceState.currentIndex} / ${sequenceState.sequence.length}`;
+    }
+
+    function startSequence() {
+      clearNumberTimeout();
+      stopNebulaAnimation();
+      cleanupSequence();
+
+      numberAgain.classList.add("hidden");
+      numberMenu.classList.add("hidden");
+
+      showScreen("sequence");
+
+      sequenceOverlay.classList.remove("visible");
+
+      const sequence = config.sequence
+        ? [...config.sequence]
+        : generateSequence(5);
+
+      sequenceState.sequence = sequence;
+      sequenceState.inputs = [];
+      sequenceState.currentIndex = 0;
+      sequenceState.errors = 0;
+      sequenceState.timeLimit = config.timeLimit;
+      sequenceState.startTime = performance.now();
+      sequenceState.deadline =
+        sequenceState.startTime + sequenceState.timeLimit;
+      sequenceState.active = true;
+      sequenceState.finished = false;
+
+      renderSequence();
+
+      timerBar.style.transform = "scaleX(1)";
+      timerBar.style.background = "var(--blue)";
+
+      directionPad.querySelectorAll("button").forEach(button => {
+        button.disabled = false;
+      });
+
+      document.addEventListener("keydown", handleSequenceKeydown);
+      directionPad.addEventListener("click", handleDirectionClick);
+
+      updateTimer();
+    }
+
+    function updateTimer() {
+      if (!sequenceState.active || sequenceState.finished) return;
+
+      const now = performance.now();
+      const remaining = Math.max(0, sequenceState.deadline - now);
+      const progress = remaining / sequenceState.timeLimit;
+
+      timerBar.style.transform = `scaleX(${progress})`;
+
+      if (progress <= 0.25) {
+        timerBar.style.background = "var(--red)";
+      } else if (progress <= 0.5) {
+        timerBar.style.background = "var(--yellow)";
+      }
+
+      if (remaining <= 0) {
+        finishSequence("timeout");
         return;
       }
 
-      const remaining = Math.max(0, timeLimit - elapsed());
-      timer.textContent = `${(remaining / 1000).toFixed(1)}s`;
-    }, 50);
-  }
+      sequenceState.animationFrame =
+        requestAnimationFrame(updateTimer);
+    }
 
-  // DEMONSTRAÇÃO NO NAVEGADOR
-  function startDemo() {
-    showScreen("menu-screen");
+    function handleSequenceKeydown(event) {
+      const direction = KEY_DIRECTIONS[event.key];
 
-    $("demo-number").onclick = () => {
-      startNumber(1, 100);
-    };
+      if (!direction) return;
 
-    $("demo-sequence").onclick = () => {
-      startSequence(randomSequence(5), null, 15000);
-    };
-  }
+      event.preventDefault();
+      submitDirection(direction);
+    }
 
-  // INICIALIZAÇÃO
-  if (demoMode) {
-    startDemo();
-  } else if (requestedMethod === "number") {
-    const min = Number(params.get("minimum") ?? 1);
-    const max = Number(params.get("maximum") ?? 100);
-    startNumber(min, max);
-  } else if (requestedMethod === "sequence") {
-    const sequence = (params.get("sequence") || "")
-      .split(",")
-      .filter(Boolean);
+    function handleDirectionClick(event) {
+      const button = event.target.closest("[data-direction]");
 
-    startSequence(
-      sequence,
-      params.get("challenge_id"),
-      Number(params.get("time_limit") || 15000)
-    );
-  } else {
-    $("error-message").textContent = "Método de avaliação desconhecido.";
-  }
-})();
-</script>
+      if (!button || !directionPad.contains(button)) return;
+
+      submitDirection(button.dataset.direction);
+    }
+
+    function flashCurrentSymbolError() {
+      const currentSymbol = sequenceGrid.querySelector(
+        `[data-index="${sequenceState.currentIndex}"]`
+      );
+
+      if (!currentSymbol) return;
+
+      if (sequenceState.errorFlashTimeout) {
+        clearTimeout(sequenceState.errorFlashTimeout);
+      }
+
+      currentSymbol.classList.remove("current", "error");
+
+      // Reinicia a animação mesmo se houver erros consecutivos.
+      void currentSymbol.offsetWidth;
+
+      currentSymbol.classList.add("error");
+
+      sequenceState.errorFlashTimeout = setTimeout(() => {
+        if (
+          sequenceState.active &&
+          !sequenceState.finished &&
+          currentSymbol.dataset.index === String(sequenceState.currentIndex)
+        ) {
+          currentSymbol.classList.remove("error");
+          currentSymbol.classList.add("current");
+        }
+      }, 350);
+    }
+
+    function submitDirection(direction) {
+      if (!sequenceState.active || sequenceState.finished) return;
+
+      if (performance.now() >= sequenceState.deadline) {
+        finishSequence("timeout");
+        return;
+      }
+
+      const expected =
+        sequenceState.sequence[sequenceState.currentIndex];
+
+      sequenceState.inputs.push(direction);
+
+      if (direction !== expected) {
+        sequenceState.errors++;
+
+        flashCurrentSymbolError();
+
+        return;
+      }
+
+      // Acerto: avança para o próximo símbolo.
+      const previousSymbol = sequenceGrid.querySelector(
+        `[data-index="${sequenceState.currentIndex}"]`
+      );
+
+      if (previousSymbol) {
+        previousSymbol.classList.remove("current", "error");
+        previousSymbol.classList.add("completed");
+      }
+
+      if (sequenceState.errorFlashTimeout) {
+        clearTimeout(sequenceState.errorFlashTimeout);
+        sequenceState.errorFlashTimeout = null;
+      }
+
+      sequenceState.currentIndex++;
+
+      updateSequenceDisplay();
+
+      // Todos os símbolos foram acertados.
+      if (sequenceState.currentIndex >= sequenceState.sequence.length) {
+        finishSequence("success");
+      }
+    }
+
+    function cleanupSequence() {
+      sequenceState.active = false;
+
+      if (sequenceState.animationFrame) {
+        cancelAnimationFrame(sequenceState.animationFrame);
+        sequenceState.animationFrame = null;
+      }
+
+      if (sequenceState.errorFlashTimeout) {
+        clearTimeout(sequenceState.errorFlashTimeout);
+        sequenceState.errorFlashTimeout = null;
+      }
+
+      document.removeEventListener("keydown", handleSequenceKeydown);
+      directionPad.removeEventListener("click", handleDirectionClick);
+    }
+
+    function finishSequence(reason) {
+      if (sequenceState.finished) return;
+
+      sequenceState.finished = true;
+      sequenceState.active = false;
+
+      const elapsed = Math.min(
+        sequenceState.timeLimit,
+        Math.max(0, Math.round(
+          performance.now() - sequenceState.startTime
+        ))
+      );
+
+      const hits = sequenceState.currentIndex;
+      const errors = sequenceState.errors;
+      const attempts = hits + errors;
+
+      const accuracy = attempts > 0
+        ? (hits / attempts) * 100
+        : 0;
+
+      cleanupSequence();
+
+      directionPad.querySelectorAll("button").forEach(button => {
+        button.disabled = true;
+      });
+
+      const completed = reason === "success";
+
+      if (completed) {
+        timerBar.style.transform = "scaleX(0)";
+      }
+
+      const payload = {
+        type: "skill_check",
+        method: "sequence",
+        challenge_id: config.challengeId,
+        inputs: [...sequenceState.inputs],
+        hits: hits,
+        errors: errors,
+        attempts: attempts,
+        accuracy: Number(accuracy.toFixed(2)),
+        time_ms: elapsed,
+        completed: completed,
+        reason: reason
+      };
+
+      showSequenceResult({
+        completed,
+        reason,
+        hits,
+        errors,
+        attempts,
+        accuracy,
+        elapsed,
+        payload
+      });
+    }
+
+    // ============================================================
+    // RESULTADO SOBREPOSTO DA SEQUÊNCIA
+    // ============================================================
+
+    const overlayTitle = document.getElementById("sequence-overlay-title");
+    const accuracyValue = document.getElementById("accuracy-value");
+    const accuracyFill = document.getElementById("accuracy-fill");
+
+    const statHits = document.getElementById("stat-hits");
+    const statErrors = document.getElementById("stat-errors");
+    const statTime = document.getElementById("stat-time");
+    const overlaySummary = document.getElementById("overlay-summary");
+
+    const sequenceAgain = document.getElementById("sequence-again");
+    const sequenceMenu = document.getElementById("sequence-menu");
+
+    let sequenceSendTimeout = null;
+
+    function showSequenceResult(data) {
+      if (sequenceSendTimeout) {
+        clearTimeout(sequenceSendTimeout);
+        sequenceSendTimeout = null;
+      }
+
+      overlayTitle.textContent = data.completed
+        ? "Sequência concluída!"
+        : "Tempo esgotado!";
+
+      accuracyValue.textContent =
+        `${data.accuracy.toFixed(1).replace(".", ",")}%`;
+
+      statHits.textContent = data.hits;
+      statErrors.textContent = data.errors;
+      statTime.textContent = `${(data.elapsed / 1000).toFixed(1)}s`;
+
+      overlaySummary.textContent =
+        `${data.hits} acertos em ${data.attempts} tentativas.`;
+
+      accuracyFill.style.width = "0%";
+
+      // Ativa a animação da barra após o painel aparecer.
+      requestAnimationFrame(() => {
+        accuracyFill.style.width = `${data.accuracy}%`;
+      });
+
+      // No modo navegador, permite repetir ou voltar ao menu.
+      // No Telegram, o resultado é enviado automaticamente.
+      if (!tg) {
+        sequenceAgain.classList.remove("hidden");
+        sequenceMenu.classList.remove("hidden");
+      } else {
+        sequenceAgain.classList.add("hidden");
+        sequenceMenu.classList.add("hidden");
+      }
+
+      sequenceOverlay.classList.add("visible");
+
+      sequenceSendTimeout = setTimeout(() => {
+        sendResult(data.payload);
+      }, 1400);
+    }
+
+    // ============================================================
+    // INICIALIZAÇÃO
+    // ============================================================
+
+    function initializeApp() {
+      if (config.method === "number") {
+        startNumber();
+        return;
+      }
+
+      if (config.method === "sequence") {
+        startSequence();
+        return;
+      }
+
+      // Acesso direto pelo navegador: modo demonstração.
+      showScreen("menu");
+    }
+
+    window.addEventListener("beforeunload", () => {
+      clearNumberTimeout();
+      cleanupSequence();
+      stopNebulaAnimation();
+
+      if (sequenceSendTimeout) {
+        clearTimeout(sequenceSendTimeout);
+      }
+    });
+
+    initializeApp();
+  </script>
 </body>
+
 </html>
