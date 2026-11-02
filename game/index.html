@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="theme-color" content="#0b0c12">
-  <title>Skill Check</title>
+  <title>RPG Skill Check</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -153,6 +153,28 @@
     }
 
     /* MENU */
+
+    .menu-brand {
+      text-align: center;
+      font-size: 27px;
+      line-height: 1.2;
+      font-weight: 850;
+      letter-spacing: -.7px;
+      margin: 4px 0 12px;
+    }
+
+    .github-link {
+      display: block;
+      width: fit-content;
+      margin: 0 auto;
+      color: var(--blue);
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    .github-link:hover {
+      text-decoration: underline;
+    }
 
     .menu-options {
       display: grid;
@@ -590,11 +612,14 @@
   <!-- MENU -->
   <section id="menu-screen" class="screen">
     <div class="card">
-      <div class="eyebrow">Desafio de perícia</div>
-      <h1>Escolha um teste</h1>
-      <p class="description">
-        Prepare-se para realizar seu teste de habilidade.
-      </p>
+      <div class="menu-brand">RPG Skill Check</div>
+
+      <a
+        class="github-link"
+        href="https://github.com/raphaelwb/rpg-skill-check"
+        target="_blank"
+        rel="noopener noreferrer"
+      >GitHub do projeto</a>
 
       <div class="menu-options">
         <button class="menu-option" onclick="startNumber()">
@@ -742,8 +767,12 @@
 
     const tg = window.Telegram?.WebApp || null;
 
-    // Considera Telegram apenas quando há dados de inicialização.
-    const isTelegram = Boolean(tg && tg.initData);
+    /*
+     * Correção: a presença do objeto WebApp identifica o ambiente.
+     * Não dependemos de initData estar preenchido para ocultar
+     * os controles de navegador dentro do Telegram.
+     */
+    const isTelegram = Boolean(tg);
 
     if (tg) {
       tg.ready();
@@ -766,7 +795,6 @@
       sequence: parseSequence(params.get("sequence")),
       challengeId: params.get("challenge_id") || null,
 
-      // Resultado numérico permanece na tela por 6 segundos.
       displayTime: clamp(
         parseInteger(params.get("display_time"), 6000),
         1000,

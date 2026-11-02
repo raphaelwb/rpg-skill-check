@@ -1,4 +1,5 @@
 
+import html
 import json
 import logging
 import os
@@ -6,6 +7,7 @@ import os
 from dotenv import load_dotenv
 
 from telegram import Update
+from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -98,6 +100,47 @@ skill_check = SkillCheck(
     game_url=GAME_URL,
     config=CONFIG,
 )
+
+
+# ============================================================
+# EXIBIÇÃO DOS DADOS RECEBIDOS
+# ============================================================
+
+async def show_received_data(message, user, data):
+    """
+    Registra e mostra no Telegram os dados enviados pelo Mini App.
+    """
+
+    formatted_data = json.dumps(
+        data,
+        ensure_ascii=False,
+        indent=2,
+    )
+
+    logger.info(
+        "Payload recebido do Mini App | usuário=%s | nome=%s | dados=%s",
+        user.id,
+        user.full_name,
+        formatted_data,
+    )
+
+    # Mantém a mensagem dentro do limite do Telegram.
+    max_length = 3200
+
+    if len(formatted_data) > max_length:
+        formatted_data = (
+            formatted_data[:max_length]
+            + "\n... conteúdo reduzido na mensagem. "
+              "Consulte o log do bot para ver o payload completo."
+        )
+
+    safe_data = html.escape(formatted_data)
+
+    await message.reply_text(
+        "📩 <b>Dados enviados pelo cliente:</b>\n\n"
+        f"<pre>{safe_data}</pre>",
+        parse_mode=ParseMode.HTML,
+    )
 
 
 # ============================================================
@@ -276,24 +319,43 @@ async def receive_web_app_data(
 ):
     """
     Recebe os resultados enviados pelo Telegram Mini App.
+    Registra o payload completo e mostra os dados recebidos.
     """
 
     message = update.effective_message
     user = update.effective_user
 
     if message is None or user is None:
+        logger.warning("Atualização recebida sem mensagem ou usuário.")
         return
 
     if message.web_app_data is None:
+        logger.warning(
+            "Mensagem recebida sem web_app_data. usuário=%s",
+            user.id,
+        )
         return
 
     raw_data = message.web_app_data.data
+
+    # Registra o conteúdo bruto antes de tentar interpretá-lo.
+    logger.info(
+        "WebApp Data recebido | usuário=%s | nome=%s | payload_bruto=%s",
+        user.id,
+        user.full_name,
+        raw_data,
+    )
 
     try:
         data = json.loads(raw_data)
 
         if not isinstance(data, dict):
-            raise ValueError("O conteúdo recebido não é um objeto JSON.")
+            raise ValueError(
+                "O conteúdo recebido não é um objeto JSON."
+            )
+
+        # Mostra exatamente os campos recebidos do cliente.
+        await show_received_data(message, user, data)
 
         if data.get("type") != "skill_check":
             raise ValueError("Tipo de resultado desconhecido.")
@@ -331,7 +393,7 @@ async def receive_web_app_data(
                 )
 
             logger.info(
-                "Teste numérico: usuário=%s resultado=%s intervalo=%s-%s",
+                "Teste numérico validado: usuário=%s resultado=%s intervalo=%s-%s",
                 user.id,
                 result,
                 minimum,
@@ -339,10 +401,10 @@ async def receive_web_app_data(
             )
 
             await message.reply_text(
-                "✧ **Teste numérico concluído!**\n\n"
-                f"Resultado: **{result}/{maximum}**\n"
+                "✧ <b>Teste numérico concluído!</b>\n\n"
+                f"Resultado: <b>{result}/{maximum}</b>\n"
                 f"Intervalo: {minimum} a {maximum}",
-                parse_mode="Markdown",
+                parse_mode=ParseMode.HTML,
             )
 
             await send_menu(update, context)
@@ -385,7 +447,7 @@ async def receive_web_app_data(
 
             logger.info(
                 (
-                    "Teste de sequência: usuário=%s "
+                    "Teste de sequência validado: usuário=%s "
                     "sucesso=%s acertos=%s erros=%s "
                     "tentativas=%s precisão=%.2f%% tempo=%sms"
                 ),
@@ -399,22 +461,22 @@ async def receive_web_app_data(
             )
 
             if success:
-                status = "🏆 **Sequência concluída!**"
+                status = "🏆 <b>Sequência concluída!</b>"
             else:
-                status = "⏱️ **Tempo esgotado!**"
+                status = "⏱️ <b>Tempo esgotado!</b>"
 
             result_text = (
                 f"{status}\n\n"
-                f"Acertos: **{hits}/{total}**\n"
-                f"Erros: **{errors}**\n"
-                f"Tentativas: **{attempts}**\n"
-                f"Precisão: **{accuracy:.1f}%**\n"
-                f"Tempo: **{time_ms / 1000:.2f} segundos**"
+                f"Acertos: <b>{hits}/{total}</b>\n"
+                f"Erros: <b>{errors}</b>\n"
+                f"Tentativas: <b>{attempts}</b>\n"
+                f"Precisão: <b>{accuracy:.1f}%</b>\n"
+                f"Tempo: <b>{time_ms / 1000:.2f} segundos</b>"
             )
 
             await message.reply_text(
                 result_text,
-                parse_mode="Markdown",
+                parse_mode=ParseMode.HTML,
             )
 
             await send_menu(update, context)
@@ -491,6 +553,7 @@ def main():
     )
 
     logger.info("Skill Check Bot iniciado.")
+    logger.info("Aguardando dados enviados pelo Telegram Mini App.")
 
     application.run_polling()
 
