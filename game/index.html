@@ -171,7 +171,7 @@
   const requestedMethod = params.get("method");
 
   // Sem método na URL, a página está em modo de demonstração.
-  const demoMode = !requestedMethod || !tg?.initDataUnsafe?.user;
+  const demoMode = !requestedMethod;
 
   const $ = id => document.getElementById(id);
 
