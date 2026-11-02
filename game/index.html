@@ -2,174 +2,341 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skill Roll</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPG Skill Check</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; }
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    body {
+      margin: 0;
+      padding: 24px 18px;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: var(--tg-theme-text-color, #222);
+      background: var(--tg-theme-bg-color, #fff);
+      display: flex;
+      justify-content: center;
+    }
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+    main {
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
 
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            font-family: Arial, sans-serif;
-            background: var(--tg-theme-bg-color, #17212b);
-            color: var(--tg-theme-text-color, #ffffff);
-        }
+    h1 { font-size: 25px; margin: 12px 0; }
+    p { color: var(--tg-theme-hint-color, #777); }
 
-        .container {
-            width: 100%;
-            max-width: 360px;
-            text-align: center;
-        }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 15px 20px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      color: var(--tg-theme-button-text-color, white);
+      background: var(--tg-theme-button-color, #2481cc);
+    }
 
-        h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
+    button:disabled { opacity: .4; cursor: default; }
 
-        .description {
-            color: var(--tg-theme-hint-color, #aaaaaa);
-            margin-bottom: 30px;
-        }
+    .primary { width: 100%; margin-top: 20px; }
+    .hidden { display: none !important; }
 
-        .range {
-            font-size: 14px;
-            color: var(--tg-theme-hint-color, #aaaaaa);
-        }
+    .number {
+      font-size: 76px;
+      font-weight: bold;
+      margin: 35px 0;
+    }
 
-        .result {
-            font-size: 76px;
-            font-weight: bold;
-            margin: 25px 0;
-        }
+    .sequence {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 28px 0;
+      min-height: 55px;
+    }
 
-        button {
-            width: 100%;
-            padding: 17px;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            background: var(--tg-theme-button-color, #2481cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
-        }
+    .symbol {
+      font-size: 27px;
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--tg-theme-secondary-bg-color, #eee);
+    }
 
-        button:disabled {
-            opacity: 0.6;
-            cursor: default;
-        }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 70px);
+      gap: 9px;
+      justify-content: center;
+      margin: 25px auto;
+    }
 
-        .status {
-            min-height: 24px;
-            margin-top: 20px;
-            font-size: 14px;
-            color: var(--tg-theme-hint-color, #aaaaaa);
-        }
-    </style>
+    .controls button {
+      width: 70px;
+      height: 62px;
+      padding: 0;
+      font-size: 27px;
+    }
+
+    .controls .up { grid-column: 2; }
+    .controls .left { grid-column: 1; grid-row: 2; }
+    .controls .down { grid-column: 2; grid-row: 2; }
+    .controls .right { grid-column: 3; grid-row: 2; }
+
+    .status { font-size: 18px; margin-top: 18px; }
+    .timer { font-size: 24px; font-weight: bold; }
+    .muted { color: var(--tg-theme-hint-color, #777); }
+  </style>
 </head>
-
 <body>
-    <main class="container">
-        <h1>Skill Roll</h1>
+<main>
+  <h1>RPG Skill Check</h1>
 
-        <p class="description">
-            Faça sua rolagem de habilidade.
-        </p>
+  <section id="number-screen" class="hidden">
+    <p>Teste básico</p>
+    <div id="number-value" class="number">?</div>
+    <p id="number-range"></p>
+    <button id="roll-button" class="primary">Rolar</button>
+  </section>
 
-        <div class="range" id="range"></div>
+  <section id="sequence-screen" class="hidden">
+    <p>Memorize a sequência</p>
+    <div id="sequence-display" class="sequence"></div>
+    <p id="sequence-instruction" class="muted"></p>
 
-        <div class="result" id="result">?</div>
+    <div id="sequence-play" class="hidden">
+      <div id="timer" class="timer"></div>
+      <div id="progress" class="status"></div>
 
-        <button id="rollButton">
-            Rolar habilidade
-        </button>
+      <div class="controls">
+        <button class="up" data-symbol="UP">↑</button>
+        <button class="left" data-symbol="LEFT">←</button>
+        <button class="down" data-symbol="DOWN">↓</button>
+        <button class="right" data-symbol="RIGHT">→</button>
+      </div>
+    </div>
+  </section>
 
-        <div class="status" id="status"></div>
-    </main>
+  <section id="result-screen" class="hidden">
+    <h1 id="result-title"></h1>
+    <p id="result-message"></p>
+  </section>
 
-    <script>
-        const tg = window.Telegram?.WebApp;
+  <p id="error-message" class="status"></p>
+</main>
 
-        if (tg) {
-            tg.ready();
-            tg.expand();
+<script>
+(() => {
+  const tg = window.Telegram?.WebApp;
+  tg?.ready();
+  tg?.expand();
+
+  const params = new URLSearchParams(location.search);
+  const method = params.get("method") || "number";
+
+  const $ = id => document.getElementById(id);
+  const show = id => $(id).classList.remove("hidden");
+  const hide = id => $(id).classList.add("hidden");
+
+  function showResult(title, message, payload) {
+    hide("number-screen");
+    hide("sequence-screen");
+    show("result-screen");
+    $("result-title").textContent = title;
+    $("result-message").textContent = message;
+
+    if (tg) {
+      tg.sendData(JSON.stringify(payload));
+    }
+  }
+
+  function randomInt(min, max) {
+    const range = max - min + 1;
+    const array = new Uint32Array(1);
+    const limit = Math.floor(0x100000000 / range) * range;
+
+    let value;
+    do {
+      crypto.getRandomValues(array);
+      value = array[0];
+    } while (value >= limit);
+
+    return min + (value % range);
+  }
+
+  // MÉTODO 1: TESTE NUMÉRICO
+  function startNumber() {
+    const min = Number(params.get("minimum") ?? 1);
+    const max = Number(params.get("maximum") ?? 100);
+
+    if (!Number.isInteger(min) || !Number.isInteger(max) || min > max) {
+      $("error-message").textContent = "Intervalo numérico inválido.";
+      return;
+    }
+
+    show("number-screen");
+    $("number-range").textContent = `Intervalo: ${min} até ${max}`;
+
+    $("roll-button").addEventListener("click", () => {
+      const result = randomInt(min, max);
+      $("number-value").textContent = result;
+
+      showResult("Rolagem concluída", `Resultado: ${result}`, {
+        type: "skill_check",
+        method: "number",
+        minimum: min,
+        maximum: max,
+        result
+      });
+    }, { once: true });
+  }
+
+  // MÉTODO 2: SEQUÊNCIA DE DIREÇÕES
+  function startSequence() {
+    const sequence = (params.get("sequence") || "").split(",").filter(Boolean);
+    const challengeId = params.get("challenge_id");
+    const displayTime = Number(params.get("display_time") || 2000);
+    const timeLimit = Number(params.get("time_limit") || 15000);
+
+    const validSymbols = ["UP", "DOWN", "LEFT", "RIGHT"];
+
+    if (
+      !challengeId ||
+      sequence.length === 0 ||
+      !sequence.every(s => validSymbols.includes(s)) ||
+      !Number.isFinite(displayTime) ||
+      !Number.isFinite(timeLimit) ||
+      displayTime < 0 ||
+      timeLimit <= 0
+    ) {
+      $("error-message").textContent = "Configuração da sequência inválida.";
+      return;
+    }
+
+    show("sequence-screen");
+
+    const arrows = { UP: "↑", DOWN: "↓", LEFT: "←", RIGHT: "→" };
+    $("sequence-display").innerHTML = "";
+
+    sequence.forEach(symbol => {
+      const item = document.createElement("div");
+      item.className = "symbol";
+      item.textContent = arrows[symbol];
+      $("sequence-display").appendChild(item);
+    });
+
+    let inputs = [];
+    let startedAt = 0;
+    let timeoutId;
+    let timerId;
+    let finished = false;
+
+    function elapsed() {
+      return Math.round(performance.now() - startedAt);
+    }
+
+    function finish(success, reason) {
+      if (finished) return;
+      finished = true;
+
+      clearTimeout(timeoutId);
+      clearInterval(timerId);
+
+      const timeMs = startedAt ? elapsed() : 0;
+
+      showResult(
+        success ? "Sucesso!" : "Falha!",
+        reason,
+        {
+          type: "skill_check",
+          method: "sequence",
+          challenge_id: challengeId,
+          inputs,
+          time_ms: timeMs
         }
+      );
+    }
 
-        const params = new URLSearchParams(window.location.search);
+    function updateProgress() {
+      $("progress").textContent =
+        `${inputs.length} de ${sequence.length} direções`;
+    }
 
-        const min = Number(params.get("min") ?? 1);
-        const max = Number(params.get("max") ?? 100);
+    function inputSymbol(symbol) {
+      if (finished || !startedAt) return;
 
-        const resultElement = document.getElementById("result");
-        const rangeElement = document.getElementById("range");
-        const statusElement = document.getElementById("status");
-        const rollButton = document.getElementById("rollButton");
+      inputs.push(symbol);
+      updateProgress();
 
-        const validRange =
-            Number.isSafeInteger(min) &&
-            Number.isSafeInteger(max) &&
-            min <= max &&
-            max - min <= 1000000;
+      const index = inputs.length - 1;
 
-        rangeElement.textContent = validRange
-            ? `Faixa de rolagem: ${min} até ${max}`
-            : "Faixa de rolagem inválida";
+      if (inputs[index] !== sequence[index]) {
+        finish(false, "Você errou uma direção.");
+        return;
+      }
 
-        rollButton.disabled = !validRange;
+      if (inputs.length === sequence.length) {
+        finish(true, "Sequência reproduzida corretamente.");
+      }
+    }
 
-        function randomInteger(min, max) {
-            const range = max - min + 1;
+    document.querySelectorAll("[data-symbol]").forEach(button => {
+      button.addEventListener("click", () => {
+        inputSymbol(button.dataset.symbol);
+      });
+    });
 
-            if (range === 1) return min;
+    document.addEventListener("keydown", event => {
+      const keys = {
+        ArrowUp: "UP",
+        ArrowDown: "DOWN",
+        ArrowLeft: "LEFT",
+        ArrowRight: "RIGHT"
+      };
 
-            if (window.crypto?.getRandomValues) {
-                const limit = Math.floor(4294967296 / range) * range;
-                const array = new Uint32Array(1);
-                let value;
+      if (keys[event.key]) {
+        event.preventDefault();
+        inputSymbol(keys[event.key]);
+      }
+    });
 
-                do {
-                    window.crypto.getRandomValues(array);
-                    value = array[0];
-                } while (value >= limit);
+    $("sequence-instruction").textContent =
+      `Você terá ${displayTime / 1000} segundos para memorizar.`;
 
-                return min + (value % range);
-            }
+    setTimeout(() => {
+      if (finished) return;
 
-            return min + Math.floor(Math.random() * range);
-        }
+      $("sequence-display").innerHTML = "";
+      $("sequence-instruction").textContent = "Reproduza a sequência!";
+      show("sequence-play");
 
-        rollButton.addEventListener("click", () => {
-            if (!validRange || rollButton.disabled) return;
+      startedAt = performance.now();
+      updateProgress();
 
-            const result = randomInteger(min, max);
+      timeoutId = setTimeout(() => {
+        finish(false, "Tempo esgotado.");
+      }, timeLimit);
 
-            resultElement.textContent = result;
-            rollButton.disabled = true;
-            statusElement.textContent = "Enviando resultado...";
+      timerId = setInterval(() => {
+        const remaining = Math.max(0, timeLimit - elapsed());
+        $("timer").textContent = `${(remaining / 1000).toFixed(1)}s`;
+      }, 50);
+    }, displayTime);
+  }
 
-            if (tg && typeof tg.sendData === "function") {
-                tg.sendData(JSON.stringify({
-                    type: "skill_roll",
-                    result: result,
-                    min: min,
-                    max: max
-                }));
-            } else {
-                statusElement.textContent =
-                    "Modo de teste: resultado gerado localmente.";
-                rollButton.disabled = false;
-            }
-        });
-    </script>
+  if (method === "sequence") {
+    startSequence();
+  } else {
+    startNumber();
+  }
+})();
+</script>
 </body>
 </html>

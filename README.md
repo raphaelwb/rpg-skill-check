@@ -1,167 +1,161 @@
 
-# RPG Skill Roll
+# RPG Skill Check
 
-Minigame independente para rolagens de habilidade integrado ao Telegram Mini Apps.
+Minigame independente para Telegram Web Apps, criado para ser integrado a sistemas de RPG.
 
-O RPG Skill Roll é responsável apenas por gerar e devolver um resultado numérico. A interpretação desse resultado, aplicação de atributos, modificadores e regras de combate ficam sob responsabilidade do RPG que utilizar o módulo.
+Atualmente possui dois métodos:
 
-## Estrutura do projeto
+- **Number:** rolagem de um número dentro de um intervalo.
+- **Sequence:** memorizar e reproduzir uma sequência de direções.
+
+## Estrutura
 
 ```text
-rpg-skill-roll/
+rpg-skill-check/
 ├── game/
 │   └── index.html
 ├── bot/
-│   └── main.py
-├── .env
+│   ├── main.py
+│   └── skill_check.py
+├── .env.example
 ├── .gitignore
 ├── requirements.txt
 └── README.md
 ```
 
-## Requisitos
-
-- Python 3.10 ou superior.
-- Um bot criado pelo [@BotFather](https://t.me/BotFather).
-- Hospedagem HTTPS para o minigame.
-
 ## Configuração
 
-### 1. Criar o arquivo `.env`
+1. Copie `.env.example` para `.env`.
+2. Preencha `BOT_TOKEN` com o token do seu bot.
+3. Configure `GAME_URL` com a URL do jogo publicado.
 
-Na raiz do projeto, crie um arquivo chamado `.env`:
+Exemplo:
 
-```dotenv
-BOT_TOKEN=SEU_TOKEN_DO_TELEGRAM
-GAME_URL=https://raphaelwb.github.io/skill-roll/game/
+```env
+BOT_TOKEN=123456:SEU_TOKEN
+GAME_URL=https://seu-usuario.github.io/rpg-skill-check/game
+
+NUMBER_MIN=1
+NUMBER_MAX=100
+
+SEQUENCE_LENGTH=5
+SEQUENCE_DISPLAY_TIME=2000
+SEQUENCE_TIME_LIMIT=15000
 ```
 
-**Variáveis disponíveis:**
+Não envie o arquivo `.env` para o GitHub.
 
-| Variável | Descrição |
-|---|---|
-| `BOT_TOKEN` | Token fornecido pelo BotFather. |
-| `GAME_URL` | Endereço HTTPS onde o minigame está hospedado. |
+## Publicação no GitHub Pages
 
-Não compartilhe seu arquivo `.env` nem envie seu token para o GitHub.
+1. Abra as configurações do repositório.
+2. Acesse **Pages**.
+3. Selecione **Deploy from a branch**.
+4. Escolha a branch `main`.
+5. Escolha a pasta `/ (root)`.
+6. Salve.
 
-### 2. Publicar o minigame
-
-Publique o conteúdo da pasta `game` em uma hospedagem estática com HTTPS.
-
-Exemplo usando GitHub Pages:
+O endereço do jogo será semelhante a:
 
 ```text
-https://raphaelwb.github.io/skill-roll/game/
+https://seu-usuario.github.io/rpg-skill-check/game/
 ```
 
-O endereço publicado deve apontar para o `index.html`.
+Use esse endereço em `GAME_URL`.
 
-### 3. Instalar as dependências
+## Instalação do bot
 
-Na raiz do projeto, execute:
+Recomendado Python 3.10 ou superior.
+
+Crie e ative um ambiente virtual:
+
+```bash
+python -m venv .venv
+```
+
+Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+Instale as dependências:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-O projeto utiliza:
-
-- `python-telegram-bot`: integração com o Telegram.
-- `python-dotenv`: leitura das configurações do arquivo `.env`.
-
-### 4. Executar o bot
-
-Na raiz do projeto, execute:
+Inicie o bot:
 
 ```bash
 python bot/main.py
 ```
 
-Se as configurações estiverem corretas, o terminal exibirá:
+## Comandos do Telegram
 
-```text
-RPG Skill Roll iniciado.
-```
-
-Abra o bot no Telegram e envie:
-
-```text
-/start
-```
-
-O bot apresentará o botão para abrir o minigame.
-
-## Configuração das rolagens
-
-A faixa numérica é configurada por parâmetros na URL.
-
-Exemplos:
-
-| Finalidade | Parâmetros |
+| Comando | Descrição |
 |---|---|
-| Padrão | `?min=1&max=100` |
-| Faixa curta | `?min=1&max=20` |
-| Perícia | `?min=1&max=50` |
-| Personalizada | `?min=10&max=200` |
+| `/start` | Exibe os dois botões |
+| `/basico` | Exibe os botões usando o intervalo padrão |
+| `/basico 10 50` | Configura o intervalo numérico de 10 a 50 |
+| `/sequencia` | Usa as configurações padrão da sequência |
+| `/sequencia 7` | Usa 7 direções |
+| `/sequencia 7 20000` | Usa 7 direções e 20 segundos |
 
-Os valores mínimo e máximo são inclusivos.
+Os parâmetros informados nos comandos prevalecem sobre os valores do `.env`.
 
-## Dados retornados
+## Configurações
 
-Após a rolagem, o minigame envia ao bot um objeto JSON:
+| Variável | Padrão | Descrição |
+|---|---:|---|
+| `NUMBER_MIN` | 1 | Menor número |
+| `NUMBER_MAX` | 100 | Maior número |
+| `SEQUENCE_LENGTH` | 5 | Quantidade de direções |
+| `SEQUENCE_DISPLAY_TIME` | 2000 | Tempo de visualização em ms |
+| `SEQUENCE_TIME_LIMIT` | 15000 | Tempo para executar em ms |
 
-```json
-{
-  "type": "skill_roll",
-  "result": 75,
-  "min": 1,
-  "max": 100
-}
-```
-
-### Significado dos campos
-
-| Campo | Descrição |
-|---|---|
-| `type` | Identifica o tipo de operação. |
-| `result` | Número sorteado. |
-| `min` | Limite mínimo utilizado. |
-| `max` | Limite máximo utilizado. |
-
-## Integração com RPGs
-
-O RPG Skill Roll não possui regras próprias de combate ou atributos.
-
-O RPG pode utilizar o resultado recebido para realizar seus próprios cálculos.
+## Resultado do teste numérico
 
 Exemplo:
 
-```python
-resultado = 75
-forca = 20
-bonus = 10
-
-habilidade_final = resultado + forca + bonus
-
-print(habilidade_final)
+```json
+{
+  "type": "skill_check",
+  "method": "number",
+  "minimum": 1,
+  "maximum": 100,
+  "result": 42
+}
 ```
 
-## Segurança
+## Resultado do teste de sequência
 
-A primeira versão realiza o sorteio no navegador.
+Exemplo:
 
-Isso significa que um cliente modificado pode manipular o resultado enviado ao bot.
-
-Para utilização competitiva ou em partidas que exigem integridade, recomenda-se:
-
-- Validar a identidade do usuário utilizando os dados de inicialização do Telegram (`initData`).
-- Realizar o sorteio no servidor.
-- Não confiar exclusivamente nos valores enviados pelo navegador.
-
-## Licença
-
-Defina a licença de distribuição conforme as necessidades do projeto.
+```json
+{
+  "type": "skill_check",
+  "method": "sequence",
+  "challenge_id": "abc123",
+  "inputs": ["UP", "LEFT", "DOWN", "RIGHT", "UP"],
+  "time_ms": 8420
+}
 ```
 
-**Observação:** o `.env` deve permanecer fora do repositório. O `.gitignore` já deve conter essa proteção.
+O bot compara as entradas com a sequência original e calcula o sucesso e a quantidade de direções corretas.
+
+## Observações de segurança
+
+- O bot guarda a sequência esperada e valida as entradas recebidas.
+- Cada desafio de sequência só pode ser utilizado uma vez.
+- O tempo é medido no navegador com `performance.now()`, evitando penalizar o jogador pela latência da comunicação.
+- O tempo informado pelo navegador não pode ser comprovado criptograficamente pelo bot.
+- O resultado numérico também é gerado no navegador e não deve ser considerado seguro contra manipulação.
+- Os desafios pendentes são armazenados em memória. Reiniciar o bot invalida os desafios que ainda não foram concluídos.
+
+Esta versão é voltada a testes e prototipagem.
