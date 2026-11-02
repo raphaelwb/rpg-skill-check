@@ -3,9 +3,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RPG Skill Check</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
   <style>
     * { box-sizing: border-box; }
 
@@ -42,7 +43,18 @@
 
     button:disabled { opacity: .4; cursor: default; }
 
-    .primary { width: 100%; margin-top: 20px; }
+    .primary {
+      width: 100%;
+      margin-top: 14px;
+    }
+
+    .secondary {
+      width: 100%;
+      margin-top: 12px;
+      background: var(--tg-theme-secondary-bg-color, #ddd);
+      color: var(--tg-theme-text-color, #222);
+    }
+
     .hidden { display: none !important; }
 
     .number {
@@ -93,12 +105,23 @@
     .status { font-size: 18px; margin-top: 18px; }
     .timer { font-size: 24px; font-weight: bold; }
     .muted { color: var(--tg-theme-hint-color, #777); }
+    .result-icon { font-size: 48px; margin-top: 25px; }
   </style>
 </head>
+
 <body>
 <main>
   <h1>RPG Skill Check</h1>
 
+  <!-- MENU DE DEMONSTRAÇÃO -->
+  <section id="menu-screen" class="hidden">
+    <p>Modo de demonstração</p>
+    <p>Escolha um teste para experimentar.</p>
+    <button id="demo-number" class="primary">Teste básico</button>
+    <button id="demo-sequence" class="secondary">Teste de sequência</button>
+  </section>
+
+  <!-- TESTE NUMÉRICO -->
   <section id="number-screen" class="hidden">
     <p>Teste básico</p>
     <div id="number-value" class="number">?</div>
@@ -106,12 +129,13 @@
     <button id="roll-button" class="primary">Rolar</button>
   </section>
 
+  <!-- TESTE DE SEQUÊNCIA -->
   <section id="sequence-screen" class="hidden">
-    <p>Memorize a sequência</p>
-    <div id="sequence-display" class="sequence"></div>
-    <p id="sequence-instruction" class="muted"></p>
+    <p>Reproduza a sequência na ordem apresentada.</p>
 
-    <div id="sequence-play" class="hidden">
+    <div id="sequence-display" class="sequence"></div>
+
+    <div id="sequence-play">
       <div id="timer" class="timer"></div>
       <div id="progress" class="status"></div>
 
@@ -122,11 +146,16 @@
         <button class="right" data-symbol="RIGHT">→</button>
       </div>
     </div>
+
+    <p class="muted">Você também pode usar as setas do teclado.</p>
   </section>
 
+  <!-- RESULTADO -->
   <section id="result-screen" class="hidden">
+    <div id="result-icon" class="result-icon"></div>
     <h1 id="result-title"></h1>
     <p id="result-message"></p>
+    <p id="result-countdown" class="muted"></p>
   </section>
 
   <p id="error-message" class="status"></p>
@@ -139,22 +168,24 @@
   tg?.expand();
 
   const params = new URLSearchParams(location.search);
-  const method = params.get("method") || "number";
+  const requestedMethod = params.get("method");
+
+  // Sem método na URL, a página está em modo de demonstração.
+  const demoMode = !requestedMethod || !tg?.initDataUnsafe?.user;
 
   const $ = id => document.getElementById(id);
-  const show = id => $(id).classList.remove("hidden");
-  const hide = id => $(id).classList.add("hidden");
 
-  function showResult(title, message, payload) {
-    hide("number-screen");
-    hide("sequence-screen");
-    show("result-screen");
-    $("result-title").textContent = title;
-    $("result-message").textContent = message;
+  const screens = [
+    "menu-screen",
+    "number-screen",
+    "sequence-screen",
+    "result-screen"
+  ];
 
-    if (tg) {
-      tg.sendData(JSON.stringify(payload));
-    }
+  function showScreen(id) {
+    screens.forEach(screen => $(screen).classList.add("hidden"));
+    $(id).classList.remove("hidden");
+    $("error-message").textContent = "";
   }
 
   function randomInt(min, max) {
@@ -171,58 +202,109 @@
     return min + (value % range);
   }
 
-  // MÉTODO 1: TESTE NUMÉRICO
-  function startNumber() {
-    const min = Number(params.get("minimum") ?? 1);
-    const max = Number(params.get("maximum") ?? 100);
+  function randomSequence(length) {
+    const symbols = ["UP", "DOWN", "LEFT", "RIGHT"];
+    return Array.from(
+      { length },
+      () => symbols[randomInt(0, symbols.length - 1)]
+    );
+  }
 
-    if (!Number.isInteger(min) || !Number.isInteger(max) || min > max) {
+  function showResult(title, message, payload, success) {
+    showScreen("result-screen");
+
+    $("result-icon").textContent = success ? "✅" : "❌";
+    $("result-title").textContent = title;
+    $("result-message").textContent = message;
+
+    let remaining = 2;
+    $("result-countdown").textContent =
+      `Retornando em ${remaining} segundo(s)...`;
+
+    // O Mini App só envia os dados depois que o jogador vê o resultado.
+    const countdown = setInterval(() => {
+      remaining--;
+
+      if (remaining > 0) {
+        $("result-countdown").textContent =
+          `Retornando em ${remaining} segundo(s)...`;
+      } else {
+        clearInterval(countdown);
+        $("result-countdown").textContent =
+          demoMode ? "Demonstração concluída." : "Enviando resultado...";
+
+        if (!demoMode && tg) {
+          tg.sendData(JSON.stringify(payload));
+        }
+      }
+    }, 1000);
+  }
+
+  // TESTE BÁSICO
+  function startNumber(min, max) {
+    if (
+      !Number.isSafeInteger(min) ||
+      !Number.isSafeInteger(max) ||
+      min > max ||
+      max - min >= 0x100000000
+    ) {
       $("error-message").textContent = "Intervalo numérico inválido.";
       return;
     }
 
-    show("number-screen");
-    $("number-range").textContent = `Intervalo: ${min} até ${max}`;
+    showScreen("number-screen");
 
-    $("roll-button").addEventListener("click", () => {
+    $("number-value").textContent = "?";
+    $("number-range").textContent = `Intervalo: ${min} até ${max}`;
+    $("roll-button").disabled = false;
+
+    $("roll-button").onclick = () => {
       const result = randomInt(min, max);
       $("number-value").textContent = result;
+      $("roll-button").disabled = true;
 
-      showResult("Rolagem concluída", `Resultado: ${result}`, {
-        type: "skill_check",
-        method: "number",
-        minimum: min,
-        maximum: max,
-        result
-      });
-    }, { once: true });
+      showResult(
+        "Rolagem concluída",
+        `Resultado: ${result}`,
+        {
+          type: "skill_check",
+          method: "number",
+          minimum: min,
+          maximum: max,
+          result
+        },
+        true
+      );
+    };
   }
 
-  // MÉTODO 2: SEQUÊNCIA DE DIREÇÕES
-  function startSequence() {
-    const sequence = (params.get("sequence") || "").split(",").filter(Boolean);
-    const challengeId = params.get("challenge_id");
-    const displayTime = Number(params.get("display_time") || 2000);
-    const timeLimit = Number(params.get("time_limit") || 15000);
-
+  // TESTE DE SEQUÊNCIA
+  function startSequence(sequence, challengeId, timeLimit) {
     const validSymbols = ["UP", "DOWN", "LEFT", "RIGHT"];
 
     if (
-      !challengeId ||
+      !Array.isArray(sequence) ||
       sequence.length === 0 ||
-      !sequence.every(s => validSymbols.includes(s)) ||
-      !Number.isFinite(displayTime) ||
-      !Number.isFinite(timeLimit) ||
-      displayTime < 0 ||
-      timeLimit <= 0
+      !sequence.every(symbol => validSymbols.includes(symbol)) ||
+      !Number.isSafeInteger(timeLimit) ||
+      timeLimit <= 0 ||
+      timeLimit > 3600000
     ) {
-      $("error-message").textContent = "Configuração da sequência inválida.";
+      $("error-message").textContent =
+        "Configuração da sequência inválida.";
       return;
     }
 
-    show("sequence-screen");
+    showScreen("sequence-screen");
 
-    const arrows = { UP: "↑", DOWN: "↓", LEFT: "←", RIGHT: "→" };
+    const arrows = {
+      UP: "↑",
+      DOWN: "↓",
+      LEFT: "←",
+      RIGHT: "→"
+    };
+
+    // A sequência permanece visível durante todo o desafio.
     $("sequence-display").innerHTML = "";
 
     sequence.forEach(symbol => {
@@ -233,35 +315,14 @@
     });
 
     let inputs = [];
-    let startedAt = 0;
-    let timeoutId;
-    let timerId;
+    let startedAt = performance.now();
     let finished = false;
+    let timeoutId;
+
+    const buttons = document.querySelectorAll("[data-symbol]");
 
     function elapsed() {
-      return Math.round(performance.now() - startedAt);
-    }
-
-    function finish(success, reason) {
-      if (finished) return;
-      finished = true;
-
-      clearTimeout(timeoutId);
-      clearInterval(timerId);
-
-      const timeMs = startedAt ? elapsed() : 0;
-
-      showResult(
-        success ? "Sucesso!" : "Falha!",
-        reason,
-        {
-          type: "skill_check",
-          method: "sequence",
-          challenge_id: challengeId,
-          inputs,
-          time_ms: timeMs
-        }
-      );
+      return Math.max(0, Math.round(performance.now() - startedAt));
     }
 
     function updateProgress() {
@@ -269,8 +330,31 @@
         `${inputs.length} de ${sequence.length} direções`;
     }
 
+    function finish(success, reason) {
+      if (finished) return;
+      finished = true;
+
+      clearTimeout(timeoutId);
+      buttons.forEach(button => button.disabled = true);
+
+      const timeMs = Math.min(elapsed(), timeLimit);
+
+      showResult(
+        success ? "Desafio concluído!" : "Desafio encerrado",
+        `${reason}\nDireções corretas: ${success ? sequence.length : inputs.filter((v, i) => v === sequence[i]).length}/${sequence.length}\nTempo: ${timeMs} ms`,
+        {
+          type: "skill_check",
+          method: "sequence",
+          challenge_id: challengeId,
+          inputs,
+          time_ms: timeMs
+        },
+        success
+      );
+    }
+
     function inputSymbol(symbol) {
-      if (finished || !startedAt) return;
+      if (finished) return;
 
       inputs.push(symbol);
       updateProgress();
@@ -283,17 +367,21 @@
       }
 
       if (inputs.length === sequence.length) {
-        finish(true, "Sequência reproduzida corretamente.");
+        finish(true, "Você reproduziu toda a sequência corretamente.");
       }
     }
 
-    document.querySelectorAll("[data-symbol]").forEach(button => {
-      button.addEventListener("click", () => {
-        inputSymbol(button.dataset.symbol);
-      });
+    buttons.forEach(button => {
+      button.disabled = false;
+      button.onclick = () => inputSymbol(button.dataset.symbol);
     });
 
-    document.addEventListener("keydown", event => {
+    // Evita que listeners de desafios anteriores continuem ativos.
+    if (window.sequenceKeyHandler) {
+      document.removeEventListener("keydown", window.sequenceKeyHandler);
+    }
+
+    window.sequenceKeyHandler = event => {
       const keys = {
         ArrowUp: "UP",
         ArrowDown: "DOWN",
@@ -305,36 +393,62 @@
         event.preventDefault();
         inputSymbol(keys[event.key]);
       }
-    });
+    };
 
-    $("sequence-instruction").textContent =
-      `Você terá ${displayTime / 1000} segundos para memorizar.`;
+    document.addEventListener("keydown", window.sequenceKeyHandler);
 
-    setTimeout(() => {
-      if (finished) return;
+    updateProgress();
 
-      $("sequence-display").innerHTML = "";
-      $("sequence-instruction").textContent = "Reproduza a sequência!";
-      show("sequence-play");
+    timeoutId = setTimeout(() => {
+      finish(false, "O tempo acabou.");
+    }, timeLimit);
 
-      startedAt = performance.now();
-      updateProgress();
+    const timer = $("timer");
+    timer.textContent = `${(timeLimit / 1000).toFixed(1)}s`;
 
-      timeoutId = setTimeout(() => {
-        finish(false, "Tempo esgotado.");
-      }, timeLimit);
+    const timerInterval = setInterval(() => {
+      if (finished) {
+        clearInterval(timerInterval);
+        return;
+      }
 
-      timerId = setInterval(() => {
-        const remaining = Math.max(0, timeLimit - elapsed());
-        $("timer").textContent = `${(remaining / 1000).toFixed(1)}s`;
-      }, 50);
-    }, displayTime);
+      const remaining = Math.max(0, timeLimit - elapsed());
+      timer.textContent = `${(remaining / 1000).toFixed(1)}s`;
+    }, 50);
   }
 
-  if (method === "sequence") {
-    startSequence();
+  // DEMONSTRAÇÃO NO NAVEGADOR
+  function startDemo() {
+    showScreen("menu-screen");
+
+    $("demo-number").onclick = () => {
+      startNumber(1, 100);
+    };
+
+    $("demo-sequence").onclick = () => {
+      startSequence(randomSequence(5), null, 15000);
+    };
+  }
+
+  // INICIALIZAÇÃO
+  if (demoMode) {
+    startDemo();
+  } else if (requestedMethod === "number") {
+    const min = Number(params.get("minimum") ?? 1);
+    const max = Number(params.get("maximum") ?? 100);
+    startNumber(min, max);
+  } else if (requestedMethod === "sequence") {
+    const sequence = (params.get("sequence") || "")
+      .split(",")
+      .filter(Boolean);
+
+    startSequence(
+      sequence,
+      params.get("challenge_id"),
+      Number(params.get("time_limit") || 15000)
+    );
   } else {
-    startNumber();
+    $("error-message").textContent = "Método de avaliação desconhecido.";
   }
 })();
 </script>

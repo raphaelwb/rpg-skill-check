@@ -16,9 +16,20 @@ class SkillCheck:
         return f"{self.game_url}/?{urlencode(params)}"
 
     def _sequence_button(self, user_id, length=None, time_limit=None):
-        length = length or self.config["sequence_length"]
-        time_limit = time_limit or self.config["sequence_time_limit"]
-        display_time = self.config["sequence_display_time"]
+        length = (
+            self.config["sequence_length"]
+            if length is None else length
+        )
+        time_limit = (
+            self.config["sequence_time_limit"]
+            if time_limit is None else time_limit
+        )
+
+        if length < 1 or length > 100:
+            raise ValueError("A quantidade de símbolos deve estar entre 1 e 100.")
+
+        if time_limit <= 0 or time_limit > 3600000:
+            raise ValueError("O tempo deve estar entre 1 e 3600000 ms.")
 
         symbols = ["UP", "DOWN", "LEFT", "RIGHT"]
         sequence = [secrets.choice(symbols) for _ in range(length)]
@@ -33,7 +44,6 @@ class SkillCheck:
             "method": "sequence",
             "sequence": ",".join(sequence),
             "challenge_id": challenge_id,
-            "display_time": display_time,
             "time_limit": time_limit,
         })
 
@@ -58,6 +68,9 @@ class SkillCheck:
             self.config["number_max"]
             if maximum is None else maximum
         )
+
+        if minimum > maximum:
+            raise ValueError("O mínimo não pode ser maior que o máximo.")
 
         number_url = self._url({
             "method": "number",
@@ -112,19 +125,18 @@ class SkillCheck:
             return {"valid": False, "message": "Quantidade de entradas inválida."}
 
         valid_symbols = {"UP", "DOWN", "LEFT", "RIGHT"}
+
         if not all(item in valid_symbols for item in inputs):
             return {"valid": False, "message": "Símbolos inválidos."}
 
         completed = 0
+
         for actual, wanted in zip(inputs, expected):
             if actual != wanted:
                 break
             completed += 1
 
-        success = (
-            inputs == expected
-            and len(inputs) == len(expected)
-        )
+        success = inputs == expected
 
         return {
             "valid": True,

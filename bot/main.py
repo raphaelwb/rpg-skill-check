@@ -37,22 +37,23 @@ def env_int(name, default):
         raise RuntimeError(f"Valor inválido para {name}")
 
 
+
 config = {
     "number_min": env_int("NUMBER_MIN", 1),
     "number_max": env_int("NUMBER_MAX", 100),
     "sequence_length": env_int("SEQUENCE_LENGTH", 5),
-    "sequence_display_time": env_int("SEQUENCE_DISPLAY_TIME", 2000),
     "sequence_time_limit": env_int("SEQUENCE_TIME_LIMIT", 15000),
 }
 
 if config["number_min"] > config["number_max"]:
     raise RuntimeError("NUMBER_MIN não pode ser maior que NUMBER_MAX")
 
-if config["sequence_length"] < 1:
-    raise RuntimeError("SEQUENCE_LENGTH deve ser maior que zero")
+if not 1 <= config["sequence_length"] <= 100:
+    raise RuntimeError("SEQUENCE_LENGTH deve estar entre 1 e 100")
 
-if config["sequence_display_time"] < 0 or config["sequence_time_limit"] <= 0:
-    raise RuntimeError("Tempos de sequência inválidos")
+if not 1 <= config["sequence_time_limit"] <= 3600000:
+    raise RuntimeError("SEQUENCE_TIME_LIMIT deve estar entre 1 e 3600000 ms")
+
 
 
 skill_check = SkillCheck(GAME_URL, config)
