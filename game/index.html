@@ -57,6 +57,23 @@
 
     .hidden { display: none !important; }
 
+    .version {
+      margin-top: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--tg-theme-hint-color, #888);
+    }
+
+    .github-link {
+      display: inline-block;
+      margin-bottom: 16px;
+      color: var(--tg-theme-link-color, #2481cc);
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    .github-link:hover { text-decoration: underline; }
+
     .number {
       font-size: 76px;
       font-weight: bold;
@@ -116,6 +133,16 @@
   <!-- MENU DE DEMONSTRAÇÃO -->
   <section id="menu-screen" class="hidden">
     <p>Modo de demonstração</p>
+
+    <div class="version">Versão 1.0.1</div>
+
+    <a
+      class="github-link"
+      href="https://github.com/raphaelwb/rpg-skill-check"
+      target="_blank"
+      rel="noopener noreferrer"
+    >Projeto no GitHub</a>
+
     <p>Escolha um teste para experimentar.</p>
     <button id="demo-number" class="primary">Teste básico</button>
     <button id="demo-sequence" class="secondary">Teste de sequência</button>
@@ -163,6 +190,8 @@
 
 <script>
 (() => {
+  const APP_VERSION = "1.0.1";
+
   const tg = window.Telegram?.WebApp;
   tg?.ready();
   tg?.expand();
@@ -217,25 +246,26 @@
     $("result-title").textContent = title;
     $("result-message").textContent = message;
 
-    let remaining = 2;
+    let remaining = 1;
+
     $("result-countdown").textContent =
       `Retornando em ${remaining} segundo(s)...`;
 
-    // O Mini App só envia os dados depois que o jogador vê o resultado.
-    const countdown = setInterval(() => {
-      remaining--;
-
-      if (remaining > 0) {
+    // Aguarda 1 segundo para o jogador visualizar o resultado.
+    setTimeout(() => {
+      if (demoMode) {
         $("result-countdown").textContent =
-          `Retornando em ${remaining} segundo(s)...`;
+          "Demonstração concluída.";
+        return;
+      }
+
+      $("result-countdown").textContent = "Enviando resultado...";
+
+      if (tg) {
+        tg.sendData(JSON.stringify(payload));
       } else {
-        clearInterval(countdown);
         $("result-countdown").textContent =
-          demoMode ? "Demonstração concluída." : "Enviando resultado...";
-
-        if (!demoMode && tg) {
-          tg.sendData(JSON.stringify(payload));
-        }
+          "Não foi possível enviar o resultado ao Telegram.";
       }
     }, 1000);
   }
@@ -318,6 +348,7 @@
     let startedAt = performance.now();
     let finished = false;
     let timeoutId;
+    let timerInterval;
 
     const buttons = document.querySelectorAll("[data-symbol]");
 
@@ -335,7 +366,17 @@
       finished = true;
 
       clearTimeout(timeoutId);
+      clearInterval(timerInterval);
+
       buttons.forEach(button => button.disabled = true);
+
+      if (window.sequenceKeyHandler) {
+        document.removeEventListener(
+          "keydown",
+          window.sequenceKeyHandler
+        );
+        window.sequenceKeyHandler = null;
+      }
 
       const timeMs = Math.min(elapsed(), timeLimit);
 
@@ -376,9 +417,12 @@
       button.onclick = () => inputSymbol(button.dataset.symbol);
     });
 
-    // Evita que listeners de desafios anteriores continuem ativos.
+    // Remove listeners de desafios anteriores.
     if (window.sequenceKeyHandler) {
-      document.removeEventListener("keydown", window.sequenceKeyHandler);
+      document.removeEventListener(
+        "keydown",
+        window.sequenceKeyHandler
+      );
     }
 
     window.sequenceKeyHandler = event => {
@@ -406,7 +450,7 @@
     const timer = $("timer");
     timer.textContent = `${(timeLimit / 1000).toFixed(1)}s`;
 
-    const timerInterval = setInterval(() => {
+    timerInterval = setInterval(() => {
       if (finished) {
         clearInterval(timerInterval);
         return;
